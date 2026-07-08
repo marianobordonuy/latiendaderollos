@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Dashboard — La Tienda de Rollos</title>
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f5f5f5;
+    color: #111;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 90%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 0 80px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 40px;
+}
+
+.header h1 {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.btn-logout {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #111;
+    border: 1px solid #ccc;
+    padding: 8px 16px;
+    transition: .2s;
+}
+
+.btn-logout:hover { border-color:#111; background:#111; color:#fff; }
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 40px;
+}
+
+.tab {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #999;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: .15s;
+}
+
+.tab.active { color:#111; border-bottom-color:#111; }
+.tab:hover:not(.active) { color:#555; }
+
+.panel { display:none; }
+.panel.active { display:block; }
+
+.orders-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.scan-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+@media (max-width:900px) {
+    .orders-layout, .scan-layout { grid-template-columns:1fr; }
+}
+
+.section-title {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 16px;
+}
+
+.form-card, .scan-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 24px;
+    position: sticky;
+    top: 30px;
+}
+
+.form-card input,
+.form-card select,
+.scan-card input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    padding: 10px 12px;
+    font-size: 13px;
+    background: #fff;
+    color: #111;
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color .2s;
+}
+
+.form-card input:focus,
+.form-card select:focus,
+.scan-card input:focus { border-color:#111; }
+
+.form-card input::placeholder,
+.scan-card input::placeholder { color:#bbb; }
+
+.field-hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: -4px;
+    margin-bottom: 10px;
+}
+
+.btn-create, .btn-upload {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: #111;
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity .2s;
+}
+
+.btn-create:hover, .btn-upload:hover:not(:disabled) { opacity:.8; }
+.btn-upload:disabled { opacity:.35; cursor:default; }
+
+#order-result { margin-top:14px; }
+
+.result-badge {
+    border: 1px solid #111;
+    padding: 14px 18px;
+    background: #f9f9f9;
+}
+
+.result-badge .label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .5;
+    margin-bottom: 6px;
+}
+
+.result-badge .code {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+.result-badge .twin { font-size:12px; opacity:.5; margin-top:4px; }
+
+#orders {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.order-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.order-code { font-size:18px; font-weight:700; letter-spacing:3px; }
+
+.status-badge {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+}
+
+.status-RECEIVED   { color:#999; }
+.status-QUEUE      { color:#999; }
+.status-DEVELOPING { color:#c07a00; }
+.status-DRYING     { color:#c07a00; }
+.status-SCANNING   { color:#1a7abf; }
+.status-EDITING    { color:#1a7abf; }
+.status-READY      { color:#2a8a3e; }
+.status-DELIVERED  { color:#ccc; }
+
+.order-meta {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 14px;
+}
+
+.meta-row { display:flex; justify-content:space-between; font-size:12px; }
+.meta-label { opacity:.4; text-transform:uppercase; letter-spacing:1px; }
+.meta-value { font-weight:500; }
+.payment-PAID   { color:#2a8a3e; }
+.payment-UNPAID { color:#c0392b; }
+
+.scan-link { font-size:11px; color:#1a7abf; text-decoration:none; }
+.scan-link:hover { text-decoration:underline; }
+
+.order-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 14px;
+    margin-top: auto;
+}
+
+.control-row { display:flex; gap:7px; }
+
+.order-controls select {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    padding: 7px 8px;
+    font-size: 12px;
+    background: #fff;
+    color: #111;
+    outline: none;
+    cursor: pointer;
+}
+
+.btn-update {
+    border: 1px solid #111;
+    background: #fff;
+    padding: 7px 12px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: .2s;
+}
+
+.btn-update:hover { background:#111; color:#fff; }
+
+.btn-delete {
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    padding: 7px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: #c0392b;
+    width: 100%;
+    transition: .2s;
+    margin-top: 2px;
+}
+
+.btn-delete:hover { background:#c0392b; border-color:#c0392b; color:#fff; }
+
+.empty {
+    grid-column: 1/-1;
+    padding: 60px 0;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .3;
+}
+
+.dropzone {
+    border: 1px dashed #ccc;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.dropzone.drag { border-color:#111; background:#fafafa; color:#111; }
+
+input[type=file] { display:none; }
+
+.progress-bar-wrap {
+    margin-top: 12px;
+    width: 100%;
+    height: 3px;
+    background: #eee;
+    display: none;
+}
+
+.progress-bar { height:100%; width:0%; background:#111; transition:width .2s; }
+
+.scan-result { margin-top:14px; font-size:13px; word-break:break-all; }
+.scan-result a { color:#1a7abf; }
+
+.btn-copy {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: .2s;
+    display: none;
+}
+
+.btn-copy:hover { border-color:#111; }
+
+.scan-log {
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 14px;
+    height: 160px;
+    overflow: auto;
+    line-height: 1.7;
+    margin-top: 16px;
+}
+
+.imp-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.imp-fotos {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+}
+
+.imp-foto-link {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #1a7abf;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    padding: 4px 8px;
+}
+
+.imp-foto-link:hover { border-color: #1a7abf; }
+
+.imp-items {
+    display: grid;
+    gap: 3px;
+    margin-bottom: 14px;
+}
+
+.imp-item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+#impresiones {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #555;
+}
+
+.scan-info strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #111;
+    margin-bottom: 12px;
+}
+
+.scan-info code {
+    display: block;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    padding: 12px 14px;
+    font-size: 12px;
+    margin-top: 12px;
+    line-height: 1.9;
+    color: #333;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>La Tienda de Rollos — Lab</h1>
+        <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('orders', this)">Órdenes</button>
+        <button class="tab" onclick="showTab('scans', this)">Subir Scans</button>
+        <button class="tab" onclick="showTab('impresiones', this)">Impresiones</button>
+        <button class="tab" onclick="showTab('precios', this)">Precios</button>
+    </div>
+
+    <!-- PANEL ÓRDENES -->
+    <div id="panel-orders" class="panel active">
+        <div class="orders-layout">
+
+            <div>
+                <div class="section-title">Nueva orden</div>
+                <div class="form-card">
+                    <input id="twin"     placeholder="Twin Check" />
+                    <input id="name"     placeholder="Nombre del cliente" />
+                    <input id="email"    placeholder="Email" type="email" />
+                    <input id="phone"    placeholder="Teléfono" />
+                    <input id="roll"     placeholder="Rollo (ej: Kodak Gold 200)" />
+                    <select id="process">
+                        <option value="BW">BW — Blanco y Negro</option>
+                        <option value="C41">C41 — Color</option>
+                        <option value="ECN2">ECN-2 — Cine</option>
+                    </select>
+                    <select id="quality">
+                        <option value="JPG">JPG</option>
+                        <option value="TIFF">TIFF</option>
+                    </select>
+                    <input id="delivery" type="date" />
+                    <button class="btn-create" onclick="createOrder()">Crear Orden</button>
+                    <div id="order-result"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">Órdenes activas</div>
+                <div id="orders"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PANEL SCANS -->
+    <div id="panel-scans" class="panel">
+        <div class="scan-layout">
+
+            <div>
+                <div class="section-title">Subir scans</div>
+                <div class="scan-card">
+                    <input id="scan-order-code" placeholder="Código de orden (ej: A4F92C)" />
+                    <div class="field-hint">Vincula el zip a una orden activa.</div>
+                    <input id="scan-email" placeholder="Email del cliente" type="email" />
+                    <div class="field-hint">Se le manda el link automáticamente.</div>
+                    <div class="dropzone" id="dropzone">
+                        Arrastrá la carpeta de scans<br>o hacé click para seleccionar
+                    </div>
+                    <input type="file" id="scan-files" webkitdirectory directory multiple
+                        accept=".jpg,.jpeg,.png,.tif,.tiff,.dng,.nef,.cr2,.arw,.raf,.rw2">
+                    <button class="btn-upload" id="uploadBtn" onclick="uploadScans()">Subir carpeta</button>
+                    <div class="progress-bar-wrap" id="progress-wrap">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="scan-result" id="scan-result"></div>
+                    <button class="btn-copy" id="btn-copy">Copiar link</button>
+                </div>
+                <div class="scan-log" id="scan-log"></div>
+            </div>
+
+            <div>
+                <div class="section-title">Referencia</div>
+                <div class="scan-info">
+                    <strong>Campos en data.txt</strong>
+                    El formulario genera el <code style="display:inline;background:none;border:none;padding:0">data.txt</code> automáticamente.
+                    Si preferís armarlo a mano, estos son los campos disponibles:
+                    <code>order_code: A4F92C<br>email: cliente@email.com<br>subject: Tus fotos están listas</code>
+                    El link del zip queda guardado en la orden si el código coincide, y se envía el email si hay dirección.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PANEL IMPRESIONES -->
+    <div id="panel-impresiones" class="panel">
+        <div class="section-title">Pedidos de impresión</div>
+        <div id="impresiones"></div>
+    </div>
+
+    <!-- PANEL PRECIOS -->
+    <div id="panel-precios" class="panel">
+
+        <div style="max-width:480px">
+
+            <div class="section-title">Precios de impresión (UYU)</div>
+
+            <div class="form-card">
+
+                <div id="precios-fields">
+                    <div class="section-title" style="opacity:.3">Cargando...</div>
+                </div>
+
+                <button class="btn-create" onclick="guardarPrecios()" style="margin-top:16px">
+                    Guardar precios
+                </button>
+
+                <div id="precios-result" style="margin-top:12px;font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.6"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* TABS */
+function showTab(name, el) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"))
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"))
+    document.getElementById("panel-" + name).classList.add("active")
+    if (el) el.classList.add("active")
+    if (name === "precios")     loadPrecios()
+    if (name === "impresiones") loadImpresiones()
+}
+
+/* ÓRDENES */
+const statuses = ["RECEIVED","QUEUE","DEVELOPING","DRYING","SCANNING","EDITING","READY","DELIVERED"];
+const paymentStatuses = ["UNPAID","PAID"];
+
+async function createOrder() {
+    const body = {
+        twin_check:    document.getElementById("twin").value,
+        name:          document.getElementById("name").value,
+        email:         document.getElementById("email").value,
+        phone:         document.getElementById("phone").value,
+        roll:          document.getElementById("roll").value,
+        process:       document.getElementById("process").value,
+        quality:       document.getElementById("quality").value,
+        delivery_date: document.getElementById("delivery").value
+    };
+
+    const res  = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    document.getElementById("order-result").innerHTML = `
+        <div class="result-badge">
+            <div class="label">Orden creada</div>
+            <div class="code">${data.public_code}</div>
+            <div class="twin">Twin: ${data.twin_check || "—"}</div>
+        </div>`;
+
+    ["twin","name","email","phone","roll"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("delivery").valueAsDate = new Date();
+    loadOrders();
+}
+
+async function loadOrders() {
+    const res  = await fetch("/api/orders");
+    const data = await res.json();
+    const active = data.filter(o => o.status !== "DELIVERED" && o.tipo !== "impresion").reverse();
+    const container = document.getElementById("orders");
+
+    if (active.length === 0) {
+        container.innerHTML = `<div class="empty">Sin órdenes activas</div>`;
+        return;
+    }
+
+    container.innerHTML = active.map(order => `
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-code">${order.public_code}</div>
+                <div class="status-badge status-${order.status}">${order.status}</div>
+            </div>
+            <div class="order-meta">
+                <div class="meta-row"><span class="meta-label">Twin</span><span class="meta-value">${order.twin_check || "—"}</span></div>
+                <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${order.client.name}</span></div>
+                <div class="meta-row"><span class="meta-label">Rollo</span><span class="meta-value">${order.film.roll}</span></div>
+                <div class="meta-row"><span class="meta-label">Proceso</span><span class="meta-value">${order.film.process}</span></div>
+                <div class="meta-row"><span class="meta-label">Calidad</span><span class="meta-value">${order.film.quality}</span></div>
+                <div class="meta-row"><span class="meta-label">Entrega</span><span class="meta-value">${order.delivery_date || "—"}</span></div>
+                <div class="meta-row"><span class="meta-label">Pago</span><span class="meta-value payment-${order.payment_status}">${order.payment_status}</span></div>
+                ${order.scan_link ? `<div class="meta-row"><span class="meta-label">Scans</span><a class="scan-link" href="${order.scan_link}" target="_blank">Descargar ZIP</a></div>` : ""}
+            </div>
+            <div class="order-controls">
+                <div class="control-row">
+                    <select id="payment-${order.public_code}">
+                        ${paymentStatuses.map(s => `<option value="${s}" ${order.payment_status===s?"selected":""}>${s}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updatePayment('${order.public_code}')">Pago</button>
+                </div>
+                <div class="control-row">
+                    <select id="${order.public_code}">
+                        ${statuses.map(s => `<option value="${s}" ${order.status===s?"selected":""}>${s}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updateStatus('${order.public_code}')">Estado</button>
+                </div>
+                <button class="btn-delete" onclick="deleteOrder('${order.public_code}')">Eliminar orden</button>
+            </div>
+        </div>`).join("");
+}
+
+async function updateStatus(code) {
+    const status = document.getElementById(code).value;
+    await fetch(`/api/orders/${code}/status`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({status}) });
+    loadOrders();
+}
+
+async function updatePayment(code) {
+    const payment_status = document.getElementById(`payment-${code}`).value;
+    await fetch(`/api/orders/${code}/payment`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({payment_status}) });
+    loadOrders();
+}
+
+async function deleteOrder(code) {
+    if (!confirm(`¿Eliminar la orden ${code}? Esta acción no se puede deshacer.`)) return;
+    await fetch(`/api/orders/${code}`, { method:"DELETE" });
+    loadOrders();
+}
+
+/* SCANS */
+const dropzone  = document.getElementById("dropzone");
+const scanInput = document.getElementById("scan-files");
+const allowedExts = ["jpg","jpeg","png","tif","tiff","dng","nef","cr2","arw","raf","rw2"];
+
+dropzone.onclick = () => scanInput.click();
+
+dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", e => {
+    e.preventDefault();
+    scanInput.files = e.dataTransfer.files;
+    dropzone.classList.remove("drag");
+    dropzone.textContent = scanInput.files.length + " archivos seleccionados";
+});
+
+scanInput.addEventListener("change", () => {
+    if (scanInput.files.length > 0)
+        dropzone.textContent = scanInput.files.length + " archivos seleccionados";
+});
+
+function scanLog(msg) {
+    const box = document.getElementById("scan-log");
+    const t = new Date().toLocaleTimeString();
+    box.innerHTML += `[${t}] ${msg}<br>`;
+    box.scrollTop = box.scrollHeight;
+}
+
+async function uploadScans() {
+    const files = scanInput.files;
+    if (!files.length) { alert("Seleccioná una carpeta primero"); return; }
+
+    for (const file of files) {
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!allowedExts.includes(ext)) { scanLog("bloqueado: " + file.name); alert("Archivo no permitido: " + file.name); return; }
+    }
+
+    const orderCode = document.getElementById("scan-order-code").value.trim();
+    const email     = document.getElementById("scan-email").value.trim();
+
+    document.getElementById("uploadBtn").disabled = true;
+    scanLog("iniciando... " + files.length + " archivos");
+
+    let dataTxt = "";
+    if (orderCode) dataTxt += "order_code: " + orderCode + "\n";
+    if (email)     dataTxt += "email: " + email + "\n";
+
+    const formData = new FormData();
+    for (const file of files) formData.append("files", file);
+    if (dataTxt) formData.append("files", new Blob([dataTxt], {type:"text/plain"}), "data.txt");
+
+    document.getElementById("progress-wrap").style.display = "block";
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/upload");
+
+    xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+            const pct = (e.loaded / e.total) * 100;
+            document.getElementById("progress-bar").style.width = pct + "%";
+            if (Math.round(pct) % 10 === 0) scanLog("subiendo: " + Math.round(pct) + "%");
+        }
+    };
+
+    xhr.onload = () => {
+        document.getElementById("uploadBtn").disabled = false;
+        if (xhr.status !== 200) { scanLog("error: " + xhr.responseText); return; }
+        const res = JSON.parse(xhr.responseText);
+        scanLog("completado");
+        if (res.linkedOrder) scanLog("vinculado a orden: " + res.linkedOrder);
+        else if (orderCode)  scanLog("aviso: código " + orderCode + " no encontrado");
+        document.getElementById("scan-result").innerHTML = `Link: <a href="${res.link}" target="_blank">${res.link}</a>`;
+        const btn = document.getElementById("btn-copy");
+        btn.style.display = "block";
+        btn.onclick = () => { navigator.clipboard.writeText(res.link); btn.textContent = "Copiado ✓"; setTimeout(()=>btn.textContent="Copiar link",2000); };
+        loadOrders();
+    };
+
+    xhr.onerror = () => { document.getElementById("uploadBtn").disabled = false; scanLog("error de red"); };
+    xhr.send(formData);
+}
+
+let logCursor = 0;
+async function pollScanLogs() {
+    try {
+        const res = await fetch("/scan-status?since=" + logCursor);
+        if (!res.ok) return;
+        const data = await res.json();
+        data.logs.forEach(e => scanLog("[server] " + e.msg));
+        logCursor = data.next;
+    } catch {}
+}
+
+setInterval(pollScanLogs, 2000);
+
+/* IMPRESIONES */
+
+const impStatuses = ["PENDIENTE_PAGO", "RECIBIDO", "EN_PROCESO", "LISTO", "ENTREGADO"]
+
+async function loadImpresiones() {
+    const res    = await fetch("/api/orders")
+    const all    = await res.json()
+    const pedidos = all.filter(o => o.tipo === "impresion").reverse()
+    const container = document.getElementById("impresiones")
+
+    if (pedidos.length === 0) {
+        container.innerHTML = `<div class="empty">Sin pedidos de impresión</div>`
+        return
+    }
+
+    container.innerHTML = pedidos.map(p => `
+
+        <div class="imp-card">
+
+            <div class="order-header">
+                <div class="order-code" style="font-size:14px">${p.id}</div>
+                <div class="status-badge status-${p.status === "LISTO" ? "READY" : p.status === "ENTREGADO" ? "DELIVERED" : p.payment_status === "PAID" ? "DEVELOPING" : "RECEIVED"}">
+                    ${p.status}
+                </div>
+            </div>
+
+            <div class="order-meta">
+                <div class="meta-row">
+                    <span class="meta-label">Cliente</span>
+                    <span class="meta-value">${p.client.nombre}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Email</span>
+                    <span class="meta-value" style="font-size:11px">${p.client.email}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Entrega</span>
+                    <span class="meta-value">${p.envio === "retiro" ? "Retiro local" : "Envío"}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Pago</span>
+                    <span class="meta-value payment-${p.payment_status}">${p.payment_status}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Total</span>
+                    <span class="meta-value">$${p.total} UYU</span>
+                </div>
+                ${p.nota ? `
+                <div class="meta-row">
+                    <span class="meta-label">Nota</span>
+                    <span class="meta-value" style="font-size:11px;opacity:.6">${p.nota}</span>
+                </div>` : ""}
+            </div>
+
+            <div class="imp-items">
+                <div class="meta-label" style="margin-bottom:6px">Copias</div>
+                ${(p.items || []).map(item => `
+                    <div class="imp-item-row">
+                        <span>${item.qty} × ${item.size} cm</span>
+                        <span style="opacity:.5">${item.name}</span>
+                    </div>
+                `).join("")}
+            </div>
+
+            ${p.fotos?.length ? `
+            <div>
+                <div class="meta-label" style="margin-bottom:8px">Fotos</div>
+                <div class="imp-fotos">
+                    ${p.fotos.map(f => `
+                        <a class="imp-foto-link"
+                           href="/api/imprimir/foto/${encodeURIComponent(f.key)}"
+                           target="_blank">
+                            ${f.name}
+                        </a>
+                    `).join("")}
+                </div>
+            </div>` : ""}
+
+            <div class="order-controls">
+                <div class="control-row">
+                    <select id="imp-${p.id}">
+                        ${impStatuses.map(s => `
+                            <option value="${s}" ${p.status === s ? "selected" : ""}>${s}</option>
+                        `).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updateImpStatus('${p.id}')">Estado</button>
+                </div>
+                <button class="btn-delete" onclick="deleteImp('${p.id}')">Eliminar pedido</button>
+            </div>
+
+        </div>
+
+    `).join("")
+}
+
+async function updateImpStatus(id) {
+    const status = document.getElementById(`imp-${id}`).value
+    await fetch(`/api/imprimir/${id}/status`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ status })
+    })
+    loadImpresiones()
+}
+
+async function deleteImp(id) {
+    if (!confirm(`¿Eliminar el pedido ${id}? Esta acción no se puede deshacer.`)) return
+    await fetch(`/api/imprimir/${id}`, { method: "DELETE" })
+    loadImpresiones()
+}
+
+/* PRECIOS */
+const SIZES = {
+    "10x15": "10 × 15 cm",
+    "13x18": "13 × 18 cm",
+    "15x21": "15 × 21 cm",
+    "20x30": "20 × 30 cm"
+}
+
+async function loadPrecios() {
+    const fields = document.getElementById("precios-fields")
+    try {
+        const res  = await fetch("/api/precios")
+        if (!res.ok) throw new Error("Status " + res.status)
+        const data = await res.json()
+
+        fields.innerHTML = Object.entries(SIZES).map(([key, label]) => `
+            <div style="margin-bottom:10px">
+                <div class="section-title" style="margin-bottom:6px">${label}</div>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <input
+                        id="precio-${key}"
+                        type="number"
+                        min="1"
+                        value="${data[key] || ""}"
+                        style="flex:1;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none"
+                        onfocus="this.style.borderColor='#111'"
+                        onblur="this.style.borderColor='#e0e0e0'"
+                    >
+                    <span style="font-size:12px;opacity:.4;white-space:nowrap">UYU</span>
+                </div>
+            </div>
+        `).join("")
+    } catch(err) {
+        fields.innerHTML = `<div style="font-size:12px;color:#c0392b">Error cargando precios: ${err.message}</div>`
+    }
+}
+
+async function guardarPrecios() {
+    const precios = {}
+    for (const key of Object.keys(SIZES)) {
+        const val = parseFloat(document.getElementById(`precio-${key}`).value)
+        if (!val || val <= 0) {
+            alert(`Precio inválido para ${SIZES[key]}`)
+            return
+        }
+        precios[key] = val
+    }
+
+    const res = await fetch("/api/precios", {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(precios)
+    })
+
+    const result = document.getElementById("precios-result")
+    if (res.ok) {
+        result.textContent = "✓ Precios guardados"
+        result.style.color = "#2a8a3e"
+        setTimeout(() => result.textContent = "", 3000)
+    } else {
+        result.textContent = "Error al guardar"
+        result.style.color = "#c0392b"
+    }
+}
+
+/* INIT */
+document.getElementById("delivery").valueAsDate = new Date();
+loadOrders();
+
+</script>
+</body>
+</html>

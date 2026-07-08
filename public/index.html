@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>La Tienda de Rollos — Laboratorio Analógico en Punta del Este</title>
+
+<meta name="description" content="Laboratorio analógico en Punta del Este. Revelado C41, Blanco y Negro y ECN-2. Copias fotográficas en papel profesional.">
+
+<meta property="og:title" content="La Tienda de Rollos — Laboratorio Analógico">
+<meta property="og:description" content="Revelado C41, Blanco y Negro y ECN-2 en Punta del Este.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_UY">
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<style>
+
+/* =========================
+   BASE
+========================= */
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --black: #111;
+    --white: #fff;
+    --gray:  #f5f5f5;
+    --mid:   #888;
+    --border: 1px solid #111;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--white);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* =========================
+   NAV
+========================= */
+
+nav {
+    padding: 32px 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: var(--border);
+}
+
+.nav-brand {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    gap: 32px;
+}
+
+.nav-links a {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--black);
+    opacity: .5;
+    transition: opacity .2s;
+}
+
+.nav-links a:hover { opacity: 1; }
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 0;
+    min-height: 80vh;
+    border-bottom: var(--border);
+}
+
+.hero-content {
+    padding: 80px 60px 80px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: var(--border);
+}
+
+.hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 32px;
+}
+
+.hero-title {
+    font-size: clamp(52px, 7vw, 88px);
+    font-weight: 800;
+    line-height: .95;
+    letter-spacing: -2px;
+    margin-bottom: 40px;
+}
+
+.hero-title em {
+    font-style: normal;
+    opacity: .2;
+}
+
+.hero-desc {
+    font-size: 16px;
+    line-height: 1.8;
+    opacity: .6;
+    max-width: 420px;
+    margin-bottom: 48px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-block;
+    padding: 16px 28px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: .2s;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: var(--black);
+    color: var(--white);
+}
+
+.btn-primary:hover { opacity: .8; }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--black);
+    border: var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--black);
+    color: var(--white);
+}
+
+.hero-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray);
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes gradientMove {
+    0%   { transform: translateX(0); }
+    50%  { transform: translateX(-40px); }
+    100% { transform: translateX(0); }
+}
+
+/* =========================
+   SERVICIOS
+========================= */
+
+.section {
+    padding: 100px 0;
+    border-bottom: var(--border);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 60px;
+}
+
+.section-title {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+}
+
+.section-count {
+    font-size: 11px;
+    letter-spacing: 2px;
+    opacity: .25;
+}
+
+.services {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: var(--border);
+}
+
+.service-card {
+    padding: 40px 40px 40px 0;
+    border-right: var(--border);
+}
+
+.service-card:last-child {
+    border-right: none;
+    padding-right: 0;
+    padding-left: 40px;
+}
+
+.service-card:nth-child(2) {
+    padding-left: 40px;
+}
+
+.service-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: var(--border);
+    padding: 4px 10px;
+    margin-bottom: 20px;
+    opacity: .5;
+}
+
+.service-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.service-card p {
+    font-size: 13px;
+    line-height: 1.8;
+    opacity: .55;
+}
+
+/* =========================
+   IMPRESIÓN — DESTACADO
+========================= */
+
+.print-section {
+    border-bottom: var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.print-content {
+    padding: 80px 60px 80px 0;
+    border-right: var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.print-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
+}
+
+.print-title {
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+}
+
+.print-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    opacity: .6;
+    margin-bottom: 40px;
+    max-width: 400px;
+}
+
+.print-precios {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border: var(--border);
+    margin-bottom: 40px;
+}
+
+.print-precio-item {
+    padding: 20px 24px;
+    border-right: var(--border);
+    border-bottom: var(--border);
+}
+
+.print-precio-item:nth-child(2n) { border-right: none; }
+.print-precio-item:nth-child(3),
+.print-precio-item:nth-child(4)  { border-bottom: none; }
+
+.print-precio-size {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 6px;
+}
+
+.print-precio-val {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.print-precio-unit {
+    font-size: 11px;
+    opacity: .4;
+    margin-left: 4px;
+}
+
+.print-visual {
+    padding: 80px 0 80px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray);
+}
+
+.print-graphic {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.print-frame {
+    aspect-ratio: 3/4;
+    background: var(--white);
+    border: var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.print-frame::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(0,0,0,.08);
+}
+
+.print-frame:nth-child(1) { background: #e8e0d5; }
+.print-frame:nth-child(2) { background: #d5dde8; margin-top: 20px; }
+.print-frame:nth-child(3) { background: #e8e5d5; }
+.print-frame:nth-child(4) { background: #d5e8dd; margin-top: -20px; }
+.print-frame:nth-child(5) { background: #e8d5d5; }
+.print-frame:nth-child(6) { background: #e0d5e8; margin-top: 20px; }
+
+/* =========================
+   TALLERES
+========================= */
+
+.taller-section {
+    border-bottom: var(--border);
+}
+
+.taller-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.taller-content {
+    padding: 80px 60px 80px 0;
+    border-right: var(--border);
+}
+
+.taller-meta {
+    padding: 80px 0 80px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+}
+
+.taller-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.taller-meta-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .4;
+}
+
+.taller-meta-val {
+    font-weight: 600;
+}
+
+/* =========================
+   TRACKING
+========================= */
+
+.tracking-section {
+    padding: 100px 0;
+    border-bottom: var(--border);
+}
+
+.tracking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+}
+
+.track-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
+}
+
+.track-title {
+    font-size: clamp(36px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+}
+
+.track-desc {
+    font-size: 14px;
+    line-height: 1.8;
+    opacity: .6;
+    margin-bottom: 32px;
+}
+
+.track-input {
+    width: 100%;
+    padding: 18px 20px;
+    border: var(--border);
+    background: var(--white);
+    font-size: 16px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+}
+
+.track-input:focus { border-color: #555; }
+
+.track-button {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    background: var(--black);
+    color: var(--white);
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    transition: opacity .2s;
+    font-family: inherit;
+}
+
+.track-button:hover { opacity: .85; }
+
+.track-result { margin-top: 24px; }
+
+.status-card {
+    border: var(--border);
+    padding: 40px;
+    background: var(--gray);
+}
+
+.status-code {
+    font-size: 11px;
+    letter-spacing: 4px;
+    opacity: .4;
+    margin-bottom: 16px;
+}
+
+.status-main {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 24px;
+    line-height: 1;
+}
+
+.status-meta {
+    display: grid;
+    gap: 10px;
+    font-size: 13px;
+    opacity: .7;
+}
+
+.timeline {
+    margin-top: 32px;
+    border-top: 1px solid #ddd;
+    padding-top: 24px;
+}
+
+.timeline-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    letter-spacing: 1px;
+}
+
+/* UBICACIÓN */
+
+.location-box {
+    border: var(--border);
+    padding: 40px;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.location-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+    padding: 60px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .4;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+    .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .hero-content {
+        padding: 60px 0;
+        border-right: none;
+        border-bottom: var(--border);
+    }
+
+    .hero-visual { min-height: 300px; }
+
+    .services {
+        grid-template-columns: 1fr;
+    }
+
+    .service-card {
+        border-right: none;
+        border-bottom: var(--border);
+        padding: 32px 0 !important;
+    }
+
+    .print-section,
+    .taller-inner,
+    .tracking-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .print-content,
+    .taller-content {
+        padding: 60px 0;
+        border-right: none;
+        border-bottom: var(--border);
+    }
+
+    .print-visual,
+    .taller-meta {
+        padding: 60px 0;
+    }
+
+    .nav-links { display: none; }
+
+    footer {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<!-- NAV -->
+<nav>
+    <span class="nav-brand">La Tienda de Rollos</span>
+    <div class="nav-links">
+        <a href="/taller.html">Talleres</a>
+        <a href="/imprimir.html">Imprimir</a>
+        <a href="#tracking">Tracking</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="hero-eyebrow">Laboratorio analógico — Punta del Este</div>
+
+        <h1 class="hero-title">
+            Revelado<br>
+            <em>&</em><br>
+            Laboratorio
+        </h1>
+
+        <p class="hero-desc">
+            Revelamos tus rollos con precisión química y cuidado artesanal.
+            C41, Blanco y Negro y ECN-2. Escaneamos y te entregamos tus fotos listas.
+        </p>
+
+        <div class="hero-actions">
+            <a href="#tracking" class="btn btn-primary">Consultar mi rollo</a>
+            <a href="/imprimir.html" class="btn btn-secondary">Pedir copias/fotos impresas</a>
+        </div>
+
+    </div>
+
+    <div class="hero-visual">
+        <svg width="360" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%"   stop-color="#2AA8B8"/>
+                    <stop offset="50%"  stop-color="#6BBF72"/>
+                    <stop offset="100%" stop-color="#E6CF55"/>
+                </linearGradient>
+            </defs>
+            <g style="animation: gradientMove 12s ease-in-out infinite;">
+                <rect width="650" height="600" fill="url(#grad)" />
+            </g>
+            <rect x="8" y="8" width="584" height="584" fill="none" stroke="white" stroke-width="6"/>
+            <text x="85" y="185" font-size="88" fill="none" stroke="black" stroke-width="2.4" letter-spacing="6" font-weight="800">
+                <tspan x="85" dy="0">LA</tspan>
+                <tspan x="85" dy="95">TIENDA</tspan>
+                <tspan x="85" dy="95">DE</tspan>
+                <tspan x="85" dy="95">ROLLOS</tspan>
+            </text>
+        </svg>
+    </div>
+
+</section>
+
+<!-- SERVICIOS -->
+<section class="section">
+
+    <div class="section-header">
+        <span class="section-title">Servicios de revelado</span>
+        <span class="section-count">03</span>
+    </div>
+
+    <div class="services">
+
+        <div class="service-card">
+            <span class="service-tag">C41</span>
+            <h3>Revelado Color</h3>
+            <p>Procesado profesional color con control químico y consistencia de laboratorio. Para películas negativas de color en 35mm y 120.</p>
+        </div>
+
+        <div class="service-card">
+            <span class="service-tag">B&W</span>
+            <h3>Blanco y Negro</h3>
+            <p>Revelado artesanal con control técnico y químicos seleccionados. Tiempos ajustados según la emulsión y el look buscado.</p>
+        </div>
+
+        <div class="service-card">
+            <span class="service-tag">ECN-2</span>
+            <h3>Revelado Cine</h3>
+            <p>Revelado ECN-2 adaptado para fotografía fija y cine. Para películas Kodak Vision y otras emulsiones cinematográficas.</p>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- IMPRESIÓN -->
+<section class="print-section">
+
+    <div class="print-content">
+
+        <div class="print-label">Nuevo servicio</div>
+
+        <h2 class="print-title">Copias en papel fotográfico.</h2>
+
+        <p class="print-desc">
+            Subí tus fotos digitales o negativos escaneados y las imprimimos en papel fotográfico profesional. Retiro en local o envío.
+        </p>
+
+        <div class="print-precios" id="tabla-precios">
+            <div class="print-precio-item">
+                <div class="print-precio-size">10 × 15</div>
+                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
+            </div>
+            <div class="print-precio-item">
+                <div class="print-precio-size">13 × 18</div>
+                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
+            </div>
+            <div class="print-precio-item">
+                <div class="print-precio-size">15 × 21</div>
+                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
+            </div>
+            <div class="print-precio-item">
+                <div class="print-precio-size">20 × 30</div>
+                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
+            </div>
+        </div>
+
+        <a href="/imprimir.html" class="btn btn-primary" style="width:fit-content">
+            Pedir copias →
+        </a>
+
+    </div>
+
+    <div class="print-visual">
+        <div class="print-graphic">
+            <div class="print-frame"></div>
+            <div class="print-frame"></div>
+            <div class="print-frame"></div>
+            <div class="print-frame"></div>
+            <div class="print-frame"></div>
+            <div class="print-frame"></div>
+        </div>
+    </div>
+
+</section>
+
+<!-- TALLERES -->
+<section class="taller-section">
+    <div class="container">
+    <div class="taller-inner">
+
+        <div class="taller-content">
+            <div class="print-label">Formación</div>
+            <h2 class="print-title">Taller analógico.</h2>
+            <p class="print-desc">
+                Aprendé fotografía analógica desde cero. Cámaras de rollo, exposición, revelado en laboratorio y copias en papel fotográfico.
+            </p>
+            <a href="/taller.html" class="btn btn-secondary" style="width:fit-content">
+                Ver taller →
+            </a>
+        </div>
+
+        <div class="taller-meta">
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Duración</span>
+                <span class="taller-meta-val">5 clases</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Cupo</span>
+                <span class="taller-meta-val">6 personas</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Incluye</span>
+                <span class="taller-meta-val">Rollos + químicos + papel</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Inversión</span>
+                <span class="taller-meta-val">$9.240 UYU</span>
+            </div>
+        </div>
+
+    </div>
+    </div>
+</section>
+
+<!-- TRACKING -->
+<section class="tracking-section" id="tracking">
+
+    <div class="tracking-grid">
+
+        <div>
+            <div class="track-label">Film Tracking</div>
+            <h2 class="track-title">¿Cómo va tu rollo?</h2>
+            <p class="track-desc">
+                Ingresá el código que te dimos al dejar tu película en el laboratorio.
+            </p>
+
+            <input
+                id="trackCode"
+                class="track-input"
+                placeholder="A4F92C"
+                maxlength="6"
+            />
+
+            <button class="track-button" onclick="checkStatus()">
+                Consultar estado
+            </button>
+
+            <div id="statusResult" class="track-result"></div>
+        </div>
+
+        <div>
+            <div class="location-box">
+                <span class="location-label">Dónde encontrarnos</span>
+                Calle 24 esquina 28<br>
+                Galería Paseo del Mar<br>
+                1er Piso, Local 114<br>
+                Punta del Este, Uruguay<br>
+                <br>
+                <a href="https://wa.me/59891243290" style="color:#111;font-size:12px;letter-spacing:1px;">
+                    WhatsApp →
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+</div><!-- /container -->
+
+<!-- FOOTER -->
+<footer>
+    <div class="container" style="width:100%;display:flex;justify-content:space-between;align-items:center">
+        <span>La Tienda de Rollos</span>
+        <span>Punta del Este — Uruguay</span>
+    </div>
+</footer>
+
+<script>
+
+/* Cargar precios desde el server */
+async function cargarPrecios() {
+    try {
+        const res  = await fetch("/api/precios")
+        if (!res.ok) return
+        const data = await res.json()
+        const sizes = ["10x15","13x18","15x21","20x30"]
+        const labels = ["10 × 15","13 × 18","15 × 21","20 × 30"]
+        const items  = document.querySelectorAll("#tabla-precios .print-precio-item")
+        sizes.forEach((size, i) => {
+            if (items[i] && data[size]) {
+                items[i].querySelector(".print-precio-val").innerHTML =
+                    `$${data[size]} <span class="print-precio-unit">UYU</span>`
+            }
+        })
+    } catch {}
+}
+
+/* Tracking */
+async function checkStatus() {
+
+    const code = document.getElementById("trackCode").value.trim().toUpperCase()
+    if (!code) return
+
+    const result = document.getElementById("statusResult")
+    result.innerHTML = `<div class="status-card"><div style="opacity:.4;font-size:12px;letter-spacing:2px">CONSULTANDO...</div></div>`
+
+    try {
+        const res = await fetch(`/api/status/${code}`)
+
+        if (!res.ok) {
+            result.innerHTML = `
+                <div class="status-card">
+                    <div class="status-main">No encontrado</div>
+                    <div style="font-size:13px;opacity:.5">Verificá que el código sea correcto.</div>
+                </div>`
+            return
+        }
+
+        const data = await res.json()
+
+        result.innerHTML = `
+        <div class="status-card">
+            <div class="status-code">${data.public_code}</div>
+            <div class="status-main">${translateStatus(data.status)}</div>
+            <div class="status-meta">
+                <div>Rollo: ${data.film.roll}</div>
+                <div>Proceso: ${data.film.process}</div>
+                <div>Entrega estimada: ${data.delivery_date || "a confirmar"}</div>
+            </div>
+            <div class="timeline">
+                ${data.timeline.map(item => `
+                    <div class="timeline-item">
+                        <span>${translateStatus(item.status)}</span>
+                        <span style="opacity:.4">${new Date(item.date).toLocaleDateString("es-UY")}</span>
+                    </div>
+                `).join("")}
+            </div>
+        </div>`
+
+    } catch {
+        result.innerHTML = `<div class="status-card"><div style="opacity:.5;font-size:13px">Error de conexión. Intentá de nuevo.</div></div>`
+    }
+}
+
+// Enter en el input
+document.getElementById("trackCode").addEventListener("keydown", e => {
+    if (e.key === "Enter") checkStatus()
+})
+
+function translateStatus(status) {
+    const map = {
+        RECEIVED:  "Recibido",
+        QUEUE:     "En cola",
+        DEVELOPING:"Revelando",
+        DRYING:    "Secando",
+        SCANNING:  "Escaneando",
+        EDITING:   "Procesando",
+        READY:     "Listo para retirar",
+        DELIVERED: "Entregado"
+    }
+    return map[status] || status
+}
+
+cargarPrecios()
+
+</script>
+
+</body>
+</html>

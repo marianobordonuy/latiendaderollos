@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orden Status - La Tienda de Rollos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Revisa el status de tu orden de revelado</h1>
+
+    <input id="code" placeholder="A4F92C">
+
+    <button onclick="checkStatus()">
+        Revisar Orden
+    </button>
+
+    <div id="result"></div>
+
+    <a class="back" href="index.html">← Volver</a>
+
+    <br
+
+</div>
+
+<script>
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const autoCode = params.get("code");
+
+if (autoCode) {
+
+    document.getElementById("code").value =
+        autoCode;
+
+    checkStatus();
+}
+
+async function checkStatus() {
+
+    const code =
+        document.getElementById("code")
+        .value
+        .toUpperCase();
+
+    const res =
+        await fetch(`/api/status/${code}`);
+
+    if (!res.ok) {
+
+        document.getElementById("result")
+            .innerHTML = `
+                <div class="card">
+                    Orden no encontrada!
+                </div>
+            `;
+
+        return;
+    }
+
+    const data = await res.json();
+
+    let timelineHtml = "";
+
+    data.timeline.forEach(item => {
+
+        timelineHtml += `
+            <div class="timeline-item">
+                ${item.status}
+                <br>
+                ${new Date(item.date)
+                    .toLocaleString()}
+            </div>
+        `;
+    });
+
+    document.getElementById("result")
+        .innerHTML = `
+
+        <div class="card">
+
+            <h2>${data.public_code}</h2>
+
+            <br>
+
+            <p>Status: ${data.status}</p>
+
+            <p>Roll: ${data.film.roll}</p>
+
+            <p>Process: ${data.film.process}</p>
+
+            <p>Quality: ${data.film.quality}</p>
+
+            <p>Delivery:
+                ${data.delivery_date}
+            </p>
+
+            <br>
+
+            <h3>TIMELINE</h3>
+
+            <br>
+
+            ${timelineHtml}
+
+        </div>
+    `;
+}
+
+</script>
+
+</body>
+</html>

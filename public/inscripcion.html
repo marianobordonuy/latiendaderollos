@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inscripción — Taller</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background:#fff;
+    color:#111;
+}
+
+.container {
+    width:90%;
+    max-width:800px;
+    margin:0 auto;
+}
+
+header {
+    padding:40px 0;
+    font-size:12px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+}
+
+h1 {
+    font-size:28px;
+    margin-bottom:30px;
+}
+
+.info {
+    border:1px solid #111;
+    padding:30px;
+    margin-bottom:40px;
+    line-height:1.8;
+}
+
+.section {
+    margin-bottom:50px;
+}
+
+.section h2 {
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:20px;
+}
+
+/* ===== FORM ===== */
+
+form {
+    border:1px solid #111;
+    padding:30px;
+}
+
+label {
+    display:block;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+    margin-top:20px;
+}
+
+input, select, textarea {
+    width:100%;
+    border:1px solid #111;
+    padding:12px;
+    font-size:14px;
+    background:#fff;
+}
+
+textarea {
+    min-height:90px;
+}
+
+button {
+    margin-top:30px;
+    width:100%;
+    border:1px solid #111;
+    background:#fff;
+    padding:15px;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover {
+    background:#111;
+    color:#fff;
+}
+
+/* ===== FEEDBACK ===== */
+
+.success {
+    display:none;
+    border:1px solid #111;
+    padding:30px;
+    text-align:center;
+}
+
+.back {
+    margin-top:60px;
+    display:block;
+    font-size:12px;
+    opacity:0.6;
+    text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    Taller de Fotografía Analógica
+</header>
+
+<h1>Inscripción</h1>
+
+<div class="info">
+    Completá este formulario para confirmar tu inscripción.<br>
+    Nos ayuda a preparar mejor el taller según tu experiencia y equipo.
+</div>
+
+<form id="form" action="https://formspree.io/f/xdayjlzz" method="POST">
+
+    <label>Nombre completo</label>
+    <input type="text" name="nombre" required>
+
+    <label>Email</label>
+    <input type="email" name="email" required>
+
+    <label>Teléfono</label>
+    <input type="text" name="telefono">
+
+    <label>Nivel de experiencia</label>
+    <select name="nivel">
+        <option value="">Seleccionar</option>
+        <option>Principiante</option>
+        <option>Intermedio</option>
+        <option>Avanzado</option>
+    </select>
+
+    <label>¿Ya has experimentado fotografía analógica?</label>
+    <select name="analogica">
+        <option value="">Seleccionar</option>
+        <option>Sí</option>
+        <option>No</option>
+    </select>
+
+    <label>¿Qué cámara tenés?</label>
+    <input type="text" name="camara" placeholder="Ej: Canon AE-1, Nikon FM2, Yashica Mat...">
+
+    <label>¿Necesitás una cámara en préstamo?</label>
+    <select name="prestamo">
+        <option value="">Seleccionar</option>
+        <option>Sí</option>
+        <option>No</option>
+    </select>
+
+    <label>¿Tenés equipo de laboratorio?</label>
+    <select name="lab">
+        <option value="">Seleccionar</option>
+        <option>Sí</option>
+        <option>No</option>
+    </select>
+
+    <label>Si tenés equipo de laboratorio, detallá cuál</label>
+    <textarea name="detalle_lab"></textarea>
+
+    <label>¿Qué te gustaría aprender?</label>
+    <textarea name="objetivo"></textarea>
+
+    <!-- Anti spam -->
+    <input type="text" name="_gotcha" style="display:none">
+
+    <!-- Config -->
+    <input type="hidden" name="_subject" value="Nueva inscripción al taller">
+    <input type="hidden" name="_captcha" value="false">
+
+    <button type="submit">Enviar inscripción</button>
+
+</form>
+
+<div class="success" id="success">
+    <h2>Gracias</h2>
+    <p>Tu inscripción fue enviada correctamente.<br>Te vamos a contactar en breve.</p>
+</div>
+
+<a href="/taller.html" class="back">← Volver</a>
+
+</div>
+
+<script>
+const form = document.getElementById("form");
+const success = document.getElementById("success");
+
+form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const data = new FormData(form);
+
+    const res = await fetch(form.action, {
+        method: "POST",
+        body: data,
+        headers: { "Accept": "application/json" }
+    });
+
+    if (res.ok) {
+        form.style.display = "none";
+        success.style.display = "block";
+    } else {
+        alert("Error al enviar. Probá de nuevo.");
+    }
+});
+</script>
+
+</body>
+</html>

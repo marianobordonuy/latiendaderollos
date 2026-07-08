@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copias Fotográficas — La Tienda de Rollos</title>
+<meta name="description" content="Pedí copias de tus fotos en papel fotográfico profesional. 10x15, 13x18, 15x21, 20x30. Retiro en local o envío.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<style>
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    --black:  #111;
+    --white:  #fff;
+    --gray:   #f5f5f5;
+    --border: 1px solid #111;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--white);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* NAV */
+
+nav {
+    padding: 32px 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: var(--border);
+}
+
+.nav-brand {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--black);
+}
+
+.nav-back {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--black);
+    opacity: .5;
+    transition: opacity .2s;
+}
+
+.nav-back:hover { opacity: 1; }
+
+/* HERO */
+
+.hero {
+    padding: 80px 0 60px;
+    border-bottom: var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 60px;
+    align-items: end;
+}
+
+.hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
+}
+
+.hero-title {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    line-height: .95;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+}
+
+.hero-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    opacity: .6;
+    max-width: 480px;
+}
+
+/* PRECIOS HERO */
+
+.precios-hero {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border: var(--border);
+    min-width: 280px;
+}
+
+.precio-item {
+    padding: 20px 24px;
+    border-right: var(--border);
+    border-bottom: var(--border);
+}
+
+.precio-item:nth-child(2n) { border-right: none; }
+.precio-item:nth-child(3),
+.precio-item:nth-child(4)  { border-bottom: none; }
+
+.precio-size {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 6px;
+}
+
+.precio-val {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.precio-unit {
+    font-size: 11px;
+    opacity: .4;
+    margin-left: 2px;
+}
+
+/* STEPS */
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: var(--border);
+}
+
+.step {
+    padding: 40px 40px 40px 0;
+    border-right: var(--border);
+}
+
+.step:last-child { border-right: none; padding-left: 40px; padding-right: 0; }
+.step:nth-child(2) { padding-left: 40px; }
+
+.step-num {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .25;
+    margin-bottom: 16px;
+}
+
+.step-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.step-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: .55;
+}
+
+/* FORM LAYOUT */
+
+.form-section {
+    padding: 80px 0;
+    border-bottom: var(--border);
+}
+
+.form-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 60px;
+    align-items: start;
+}
+
+.form-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
+}
+
+/* DROPZONE */
+
+.dropzone {
+    border: 1px dashed #aaa;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+    margin-bottom: 24px;
+}
+
+.dropzone:hover, .dropzone.drag {
+    border-color: var(--black);
+    border-style: solid;
+}
+
+.dropzone input[type=file] { display: none; }
+
+.drop-icon {
+    font-size: 28px;
+    opacity: .2;
+    margin-bottom: 14px;
+}
+
+.drop-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.drop-hint {
+    font-size: 12px;
+    opacity: .4;
+}
+
+/* FOTOS GRID */
+
+#fotos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1px;
+    background: #e0e0e0;
+    margin-bottom: 24px;
+}
+
+.foto-card {
+    background: var(--white);
+    position: relative;
+}
+
+.foto-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.foto-controls {
+    padding: 10px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.foto-name {
+    font-size: 10px;
+    letter-spacing: .5px;
+    opacity: .4;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.foto-selects {
+    display: grid;
+    grid-template-columns: 1fr 60px;
+    gap: 4px;
+}
+
+.foto-selects select,
+.foto-selects input[type=number] {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    font-size: 11px;
+    background: var(--white);
+    color: var(--black);
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+}
+
+.foto-selects select:focus,
+.foto-selects input:focus { border-color: var(--black); }
+
+.foto-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.foto-card:hover .foto-remove { opacity: 1; }
+
+.empty-state {
+    grid-column: 1/-1;
+    padding: 60px 0;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .25;
+    background: var(--white);
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: sticky;
+    top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #e0e0e0;
+}
+
+.sidebar-block {
+    background: var(--white);
+    padding: 28px;
+}
+
+.sidebar-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
+}
+
+/* CAMPOS */
+
+.field {
+    margin-bottom: 12px;
+}
+
+.field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .5;
+    margin-bottom: 6px;
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    padding: 12px;
+    font-size: 13px;
+    background: var(--white);
+    color: var(--black);
+    outline: none;
+    transition: border-color .2s;
+    font-family: inherit;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus { border-color: var(--black); }
+
+.field textarea { min-height: 70px; resize: vertical; }
+
+/* ENVIO */
+
+.envio-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.envio-option {
+    border: 1px solid #ddd;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color .15s;
+    position: relative;
+}
+
+.envio-option.selected { border-color: var(--black); }
+
+.envio-option input[type=radio] {
+    position: absolute;
+    opacity: 0;
+}
+
+.envio-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.envio-desc {
+    font-size: 11px;
+    opacity: .45;
+    line-height: 1.4;
+}
+
+/* RESUMEN */
+
+.resumen-rows { display: grid; gap: 8px; }
+
+.resumen-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    letter-spacing: .5px;
+}
+
+.resumen-row.total {
+    border-top: 1px solid #ddd;
+    padding-top: 12px;
+    margin-top: 4px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* BTN PAGAR */
+
+.btn-pagar {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    background: var(--black);
+    color: var(--white);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s;
+    font-family: inherit;
+}
+
+.btn-pagar:hover { opacity: .85; }
+.btn-pagar:disabled { opacity: .35; cursor: default; }
+
+/* FOOTER */
+
+footer {
+    padding: 60px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .4;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .precios-hero { min-width: auto; }
+
+    .steps { grid-template-columns: 1fr; }
+
+    .step {
+        border-right: none;
+        border-bottom: var(--border);
+        padding: 32px 0 !important;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .form-layout { grid-template-columns: 1fr; }
+
+    .sidebar { position: static; }
+
+    footer { flex-direction: column; gap: 12px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-brand">La Tienda de Rollos</a>
+    <a href="/" class="nav-back">← Volver</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+
+    <div>
+        <div class="hero-eyebrow">Servicio de impresión</div>
+        <h1 class="hero-title">Copias<br>fotográficas.</h1>
+        <p class="hero-desc">
+            Subí tus fotos y las imprimimos en papel fotográfico profesional.
+            Retiro en local o envío a domicilio.
+        </p>
+    </div>
+
+    <div class="precios-hero" id="tabla-precios">
+        <div class="precio-item">
+            <div class="precio-size">10 × 15</div>
+            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
+        </div>
+        <div class="precio-item">
+            <div class="precio-size">13 × 18</div>
+            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
+        </div>
+        <div class="precio-item">
+            <div class="precio-size">15 × 21</div>
+            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
+        </div>
+        <div class="precio-item">
+            <div class="precio-size">20 × 30</div>
+            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- STEPS -->
+<div class="steps">
+    <div class="step">
+        <div class="step-num">Paso 01</div>
+        <div class="step-title">Subí tus fotos</div>
+        <div class="step-desc">JPG, PNG o TIFF. Resolución mínima recomendada: 300 dpi al tamaño de impresión.</div>
+    </div>
+    <div class="step">
+        <div class="step-num">Paso 02</div>
+        <div class="step-title">Elegí tamaño y cantidad</div>
+        <div class="step-desc">Configurá cada foto por separado. Podés pedir distintos tamaños en el mismo pedido.</div>
+    </div>
+    <div class="step">
+        <div class="step-num">Paso 03</div>
+        <div class="step-title">Pagá y listo</div>
+        <div class="step-desc">Pago con MercadoPago. Confirmación inmediata y aviso cuando estén listas.</div>
+    </div>
+</div>
+
+<!-- FORM -->
+<div class="form-section">
+
+    <div class="form-layout">
+
+        <!-- IZQUIERDA: fotos -->
+        <div>
+
+            <div class="form-label">Tus fotos</div>
+
+            <div class="dropzone" id="dropzone">
+                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.tif,.tiff">
+                <div class="drop-icon">⬡</div>
+                <div class="drop-label">Arrastrá tus fotos acá</div>
+                <div class="drop-hint">o hacé click — JPG, PNG, TIFF</div>
+            </div>
+
+            <div id="fotos-grid">
+                <div class="empty-state" id="empty-state">
+                    Tus fotos aparecen acá
+                </div>
+            </div>
+
+        </div>
+
+        <!-- DERECHA: sidebar -->
+        <div class="sidebar">
+
+            <!-- Datos -->
+            <div class="sidebar-block">
+                <div class="sidebar-title">Tus datos</div>
+                <div class="field">
+                    <label>Nombre</label>
+                    <input type="text" id="nombre" placeholder="Nombre completo">
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="Para la confirmación">
+                </div>
+                <div class="field">
+                    <label>Teléfono (opcional)</label>
+                    <input type="tel" id="telefono">
+                </div>
+            </div>
+
+            <!-- Entrega -->
+            <div class="sidebar-block">
+                <div class="sidebar-title">Entrega</div>
+                <div class="envio-options">
+                    <div class="envio-option selected" id="opt-retiro" onclick="selectEnvio('retiro')">
+                        <input type="radio" name="envio" value="retiro" checked>
+                        <div class="envio-label">Retiro</div>
+                        <div class="envio-desc">Calle 24 esq. 28, local 114</div>
+                    </div>
+                    <div class="envio-option" id="opt-envio" onclick="selectEnvio('envio')">
+                        <input type="radio" name="envio" value="envio">
+                        <div class="envio-label">Envío</div>
+                        <div class="envio-desc">Coordinamos por email</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Nota (opcional)</label>
+                    <textarea id="nota" placeholder="Alguna indicación especial"></textarea>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="sidebar-block" id="resumen-block" style="display:none">
+                <div class="sidebar-title">Resumen</div>
+                <div class="resumen-rows" id="resumen-rows"></div>
+            </div>
+
+            <!-- Pagar -->
+            <div class="sidebar-block" style="padding:0">
+                <button class="btn-pagar" id="btn-pagar" onclick="pagar()" style="display:none">
+                    Pagar con MercadoPago
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div><!-- /container -->
+
+<footer>
+    <span>La Tienda de Rollos</span>
+    <span>Punta del Este — Uruguay</span>
+</footer>
+
+<script>
+
+const PRECIOS = {}
+
+/* Cargar precios */
+async function cargarPrecios() {
+    try {
+        const res  = await fetch("/api/precios")
+        const data = await res.json()
+        Object.assign(PRECIOS, data)
+        const sizes  = ["10x15","13x18","15x21","20x30"]
+        const items  = document.querySelectorAll("#tabla-precios .precio-item")
+        sizes.forEach((size, i) => {
+            if (items[i] && data[size]) {
+                items[i].querySelector(".precio-val").innerHTML =
+                    `$${data[size]} <span class="precio-unit">UYU</span>`
+            }
+        })
+    } catch {}
+}
+
+let fotos = []
+
+/* DROPZONE */
+
+const dropzone  = document.getElementById("dropzone")
+const fileInput = document.getElementById("file-input")
+
+dropzone.addEventListener("click", () => fileInput.click())
+
+dropzone.addEventListener("dragover", e => {
+    e.preventDefault()
+    dropzone.classList.add("drag")
+})
+
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"))
+
+dropzone.addEventListener("drop", e => {
+    e.preventDefault()
+    dropzone.classList.remove("drag")
+    agregarFotos(e.dataTransfer.files)
+})
+
+fileInput.addEventListener("change", () => {
+    agregarFotos(fileInput.files)
+    fileInput.value = ""
+})
+
+function agregarFotos(files) {
+    for (const file of files) {
+        const ext = file.name.split(".").pop().toLowerCase()
+        if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) continue
+        fotos.push({ file, url: URL.createObjectURL(file), size: "10x15", qty: 1 })
+    }
+    renderFotos()
+}
+
+function renderFotos() {
+
+    const grid   = document.getElementById("fotos-grid")
+    const empty  = document.getElementById("empty-state")
+    const btn    = document.getElementById("btn-pagar")
+    const resumen = document.getElementById("resumen-block")
+
+    if (fotos.length === 0) {
+        grid.innerHTML = ""
+        grid.appendChild(empty)
+        empty.style.display = "block"
+        btn.style.display    = "none"
+        resumen.style.display = "none"
+        return
+    }
+
+    empty.style.display   = "none"
+    btn.style.display     = "block"
+    resumen.style.display = "block"
+
+    grid.innerHTML = fotos.map((f, i) => `
+        <div class="foto-card">
+            <img class="foto-preview" src="${f.url}" alt="${f.file.name}">
+            <button class="foto-remove" onclick="removerFoto(${i})">×</button>
+            <div class="foto-controls">
+                <div class="foto-name">${f.file.name}</div>
+                <div class="foto-selects">
+                    <select onchange="cambiarSize(${i}, this.value)">
+                        ${Object.keys(PRECIOS).map(s => `
+                            <option value="${s}" ${f.size === s ? "selected" : ""}>${s} — $${PRECIOS[s]}</option>
+                        `).join("")}
+                    </select>
+                    <input type="number" min="1" max="99" value="${f.qty}"
+                        onchange="cambiarQty(${i}, this.value)">
+                </div>
+            </div>
+        </div>
+    `).join("")
+
+    renderResumen()
+}
+
+function removerFoto(i) {
+    URL.revokeObjectURL(fotos[i].url)
+    fotos.splice(i, 1)
+    renderFotos()
+}
+
+function cambiarSize(i, val) { fotos[i].size = val; renderResumen() }
+function cambiarQty(i, val)  { fotos[i].qty = Math.max(1, parseInt(val) || 1); renderResumen() }
+
+function renderResumen() {
+
+    const grupos = {}
+    for (const f of fotos) {
+        grupos[f.size] = (grupos[f.size] || 0) + f.qty
+    }
+
+    let total = 0
+    let html  = ""
+
+    for (const [size, qty] of Object.entries(grupos)) {
+        const sub = (PRECIOS[size] || 0) * qty
+        total    += sub
+        html     += `
+            <div class="resumen-row">
+                <span>${qty} × ${size} cm</span>
+                <span>$${sub}</span>
+            </div>`
+    }
+
+    html += `
+        <div class="resumen-row total">
+            <span>Total</span>
+            <span>$${total} UYU</span>
+        </div>`
+
+    document.getElementById("resumen-rows").innerHTML = html
+}
+
+/* ENVÍO */
+
+function selectEnvio(tipo) {
+    document.getElementById("opt-retiro").classList.toggle("selected", tipo === "retiro")
+    document.getElementById("opt-envio").classList.toggle("selected",  tipo === "envio")
+    document.querySelector(`input[value=${tipo}]`).checked = true
+}
+
+/* PAGAR */
+
+async function pagar() {
+
+    const nombre = document.getElementById("nombre").value.trim()
+    const email  = document.getElementById("email").value.trim()
+
+    if (!nombre || !email) {
+        alert("Completá tu nombre y email para continuar.")
+        return
+    }
+
+    if (fotos.length === 0) {
+        alert("Agregá al menos una foto.")
+        return
+    }
+
+    const btn = document.getElementById("btn-pagar")
+    btn.disabled    = true
+    btn.textContent = "Subiendo fotos..."
+
+    try {
+        const telefono = document.getElementById("telefono").value.trim()
+        const envio    = document.querySelector("input[name=envio]:checked").value
+        const nota     = document.getElementById("nota").value.trim()
+        const items    = fotos.map(f => ({ size: f.size, qty: f.qty, name: f.file.name }))
+
+        const formData = new FormData()
+        for (const f of fotos) formData.append("fotos", f.file, f.file.name)
+        formData.append("data", JSON.stringify({ nombre, email, telefono, envio, nota, items }))
+
+        btn.textContent = "Procesando..."
+
+        const res = await fetch("/api/imprimir/pedido", { method: "POST", body: formData })
+
+        if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || "Error del servidor")
+        }
+
+        const data = await res.json()
+        window.location.href = data.init_point
+
+    } catch (err) {
+        alert("Error: " + err.message)
+        btn.disabled    = false
+        btn.textContent = "Pagar con MercadoPago"
+    }
+}
+
+cargarPrecios()
+
+</script>
+
+</body>
+</html>

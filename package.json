@@ -1,0 +1,20 @@
+{
+  "name": "latienda",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1002.0",
+    "@aws-sdk/lib-storage": "^3.1002.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "express-basic-auth": "^1.2.1",
+    "express-rate-limit": "^8.3.1",
+    "mercadopago": "^2.4.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.1"
+  }
+}
