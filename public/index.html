@@ -15,58 +15,13 @@
 <meta property="og:locale" content="es_UY">
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/base.css">
 
 <style>
 
 /* =========================
-   BASE
+   NAV (extra propio de esta página — base en css/base.css)
 ========================= */
-
-*, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-:root {
-    --black: #111;
-    --white: #fff;
-    --gray:  #f5f5f5;
-    --mid:   #888;
-    --border: 1px solid #111;
-}
-
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--white);
-    color: var(--black);
-    -webkit-font-smoothing: antialiased;
-}
-
-.container {
-    width: 90%;
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-/* =========================
-   NAV
-========================= */
-
-nav {
-    padding: 32px 0 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: var(--border);
-}
-
-.nav-brand {
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    font-weight: 600;
-}
 
 .nav-links {
     display: flex;
@@ -306,19 +261,16 @@ nav {
 .print-precios {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: #e0e0e0;
     border: var(--border);
     margin-bottom: 40px;
 }
 
 .print-precio-item {
     padding: 20px 24px;
-    border-right: var(--border);
-    border-bottom: var(--border);
+    background: var(--white);
 }
-
-.print-precio-item:nth-child(2n) { border-right: none; }
-.print-precio-item:nth-child(3),
-.print-precio-item:nth-child(4)  { border-bottom: none; }
 
 .print-precio-size {
     font-size: 10px;
@@ -556,20 +508,7 @@ nav {
     display: block;
 }
 
-/* =========================
-   FOOTER
-========================= */
-
-footer {
-    padding: 60px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: .4;
-}
+/* FOOTER: ver css/base.css */
 
 /* =========================
    MOBILE
@@ -739,22 +678,7 @@ footer {
         </p>
 
         <div class="print-precios" id="tabla-precios">
-            <div class="print-precio-item">
-                <div class="print-precio-size">10 × 15</div>
-                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
-            </div>
-            <div class="print-precio-item">
-                <div class="print-precio-size">13 × 18</div>
-                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
-            </div>
-            <div class="print-precio-item">
-                <div class="print-precio-size">15 × 21</div>
-                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
-            </div>
-            <div class="print-precio-item">
-                <div class="print-precio-size">20 × 30</div>
-                <div class="print-precio-val">— <span class="print-precio-unit">UYU</span></div>
-            </div>
+            <div class="print-precio-item"><div class="print-precio-size">Cargando...</div></div>
         </div>
 
         <a href="/imprimir.html" class="btn btn-primary" style="width:fit-content">
@@ -877,15 +801,14 @@ async function cargarPrecios() {
         const res  = await fetch("/api/precios")
         if (!res.ok) return
         const data = await res.json()
-        const sizes = ["10x15","13x18","15x21","20x30"]
-        const labels = ["10 × 15","13 × 18","15 × 21","20 × 30"]
-        const items  = document.querySelectorAll("#tabla-precios .print-precio-item")
-        sizes.forEach((size, i) => {
-            if (items[i] && data[size]) {
-                items[i].querySelector(".print-precio-val").innerHTML =
-                    `$${data[size]} <span class="print-precio-unit">UYU</span>`
-            }
-        })
+        const activos = Object.keys(data).filter(s => data[s].activo)
+        const cont = document.getElementById("tabla-precios")
+        cont.innerHTML = activos.map(size => `
+            <div class="print-precio-item">
+                <div class="print-precio-size">${size.replace("x", " × ")}</div>
+                <div class="print-precio-val">$${data[size].precio} <span class="print-precio-unit">UYU</span></div>
+            </div>
+        `).join("")
     } catch {}
 }
 

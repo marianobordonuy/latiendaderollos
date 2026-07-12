@@ -8,6 +8,7 @@ import { buildZipBuffer } from "../lib/zip.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { loadOrders, saveOrders } from "../lib/storage.js"
 import { sendScansReady } from "../lib/email.js"
+import { auth } from "../lib/auth.js"
 
 const router = Router()
 
@@ -20,9 +21,13 @@ fs.readdirSync(UPLOAD_DIR).forEach(file => {
 
 const uploadLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
 
+// Límites acordes a la memoria disponible del server (ver fly.toml): el zip
+// se arma entero en memoria, así que el total del lote no puede acercarse a la RAM del VM.
+const MAX_TOTAL_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024 // 1GB
+
 const upload = multer({
     dest: UPLOAD_DIR + "/",
-    limits: { fileSize: 6 * 1024 * 1024 * 1024, files: 160 }
+    limits: { fileSize: 300 * 1024 * 1024, files: 160 }
 })
 
 const allowedExtensions = [
@@ -41,7 +46,7 @@ export function scanLog(...args) {
 }
 
 /* UPLOAD */
-router.post("/", uploadLimiter, upload.array("files"), async (req, res) => {
+router.post("/", auth, uploadLimiter, upload.array("files"), async (req, res) => {
     try {
         scanLog("upload recibido")
         scanLog("files recibidos:", req.files.length)
@@ -49,7 +54,7 @@ router.post("/", uploadLimiter, upload.array("files"), async (req, res) => {
         const totalSize = req.files.reduce((a, f) => a + f.size, 0)
         scanLog("total upload MB:", (totalSize / 1024 / 1024).toFixed(2))
 
-        if (totalSize > 6 * 1024 * 1024 * 1024) {
+        if (totalSize > MAX_TOTAL_UPLOAD_BYTES) {
             scanLog("upload demasiado grande")
             return res.status(400).send("upload demasiado grande")
         }
@@ -102,13 +107,20 @@ router.post("/", uploadLimiter, upload.array("files"), async (req, res) => {
         const link = await uploadToR2({ bucket: BUCKETS.scans, key: `${id}.zip`, body: zipBuffer, contentType: "application/zip" })
         scanLog("zip subido")
 
-        // Guardar link en orden
+        // Guardar link en orden y avanzar el estado: el revelado digital ya
+        // está entregado, queda pendiente solo el retiro físico del negativo.
+        let order = null
         if (linkedOrder) {
             const orders = loadOrders()
-            const order  = orders.find(o => o.public_code === linkedOrder.public_code)
+            order = orders.find(o => o.public_code === linkedOrder.public_code)
             if (order) {
                 order.scan_link  = link
                 order.updated_at = new Date()
+                if (!["READY", "DELIVERED"].includes(order.status)) {
+                    order.status = "READY"
+                    order.timeline = order.timeline || []
+                    order.timeline.push({ status: "READY", date: new Date() })
+                }
                 saveOrders(orders)
             }
         }
@@ -116,7 +128,7 @@ router.post("/", uploadLimiter, upload.array("files"), async (req, res) => {
         // Email
         if (email) {
             scanLog("enviando email a", email)
-            await sendScansReady(email, link)
+            await sendScansReady(email, link, order)
             scanLog("email enviado")
         }
 
@@ -130,13 +142,13 @@ router.post("/", uploadLimiter, upload.array("files"), async (req, res) => {
     }
 })
 
-/* DESCARGA DIRECTA */
-router.get("/d/:id", (req, res) => {
+/* DESCARGA DIRECTA (protegido — evita fuerza bruta sobre el id de 3 bytes) */
+router.get("/d/:id", auth, (req, res) => {
     res.redirect(`${process.env.R2_PUBLIC_URL}/${req.params.id}.zip`)
 })
 
-/* LOGS POLLING */
-router.get("/scan-status", (req, res) => {
+/* LOGS POLLING (protegido — el log incluye emails y códigos de pedido) */
+router.get("/scan-status", auth, (req, res) => {
     const since = Number(req.query.since || 0)
     res.json({ logs: scanLogs.slice(since), next: scanLogs.length })
 })

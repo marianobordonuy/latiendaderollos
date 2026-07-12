@@ -1,230 +1,579 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Taller de Fotografía Analógica — La Tienda de Rollos</title>
-
-<meta name="description" content="Taller de fotografía analógica en Punta del Este. 5 clases, revelado, práctica y copias en papel. Cupos limitados.">
-
+<meta name="description" content="Taller de fotografía analógica en Punta del Este. Cámaras de rollo, exposición, revelado y copias en papel. Cupos limitados.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/base.css">
 
 <style>
 
-* {
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+/* HERO */
+
+.hero {
+    padding: 80px 0 60px;
+    border-bottom: var(--border);
 }
 
-body {
-    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-    background:#fff;
-    color:#111;
+.hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
 }
 
-.container {
-    width:90%;
-    max-width:800px;
-    margin:0 auto;
+.hero-title {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    line-height: .95;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
 }
 
-header {
-    padding:40px 0;
-    font-size:12px;
-    letter-spacing:3px;
-    text-transform:uppercase;
+.hero-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    opacity: .6;
+    max-width: 560px;
 }
 
-h1 {
-    font-size:34px;
-    margin-bottom:20px;
-    line-height:1.2;
+/* WHATSAPP CTA */
+
+.whatsapp-cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 36px 0;
+    border-bottom: var(--border);
 }
 
-.subtitle {
-    font-size:18px;
-    line-height:1.7;
-    margin-bottom:40px;
-    opacity:0.85;
+.whatsapp-cta-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-.info {
-    border:1px solid #111;
-    padding:30px;
-    margin-bottom:50px;
-    line-height:1.9;
+.whatsapp-cta-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--black);
+    color: var(--white);
 }
+
+.whatsapp-cta-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.whatsapp-cta-desc {
+    font-size: 13px;
+    opacity: .55;
+}
+
+/* STEPS */
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: var(--border);
+}
+
+.step {
+    padding: 40px 40px 40px 0;
+    border-right: var(--border);
+}
+
+.step:last-child { border-right: none; padding-left: 40px; padding-right: 0; }
+.step:nth-child(2) { padding-left: 40px; }
+
+.step-num {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .25;
+    margin-bottom: 16px;
+}
+
+.step-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.step-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: .55;
+}
+
+/* SECTION */
 
 .section {
-    margin-bottom:60px;
+    padding: 80px 0;
+    border-bottom: var(--border);
 }
 
-.section h2 {
-    font-size:14px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin-bottom:20px;
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 48px;
 }
 
-ul {
-    line-height:1.9;
-    padding-left:20px;
+.section-title {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
 }
 
-.workshop {
-    border-top:1px solid #ddd;
-    padding:35px 0;
+.section-count {
+    font-size: 11px;
+    letter-spacing: 2px;
+    opacity: .25;
 }
 
-.workshop:first-of-type {
-    border-top:none;
-    padding-top:0;
+/* APRENDIZAJE */
+
+.aprende {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: var(--border);
 }
 
-.workshop h3 {
-    font-size:24px;
-    margin-bottom:18px;
+.aprende-card {
+    padding: 32px 32px 0 0;
+    border-right: var(--border);
 }
 
-.workshop p {
-    line-height:1.9;
-    margin-bottom:10px;
+.aprende-card:last-child { border-right: none; padding-left: 32px; padding-right: 0; }
+.aprende-card:nth-child(2) { padding-left: 32px; }
+
+.aprende-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: var(--border);
+    padding: 4px 10px;
+    margin-bottom: 18px;
+    opacity: .5;
 }
 
-.button {
-    display:inline-block;
-    border:1px solid #111;
-    padding:15px 25px;
-    text-decoration:none;
-    color:#111;
-    margin-top:20px;
-    margin-right:10px;
-    transition:.2s;
+.aprende-card ul {
+    list-style: none;
+    font-size: 13px;
+    line-height: 2.1;
+    opacity: .65;
 }
 
-.button:hover {
-    background:#111;
-    color:#fff;
+.aprende-card li::before {
+    content: "— ";
+    opacity: .4;
 }
 
-.back {
-    margin-top:60px;
-    margin-bottom:40px;
-    display:block;
-    font-size:12px;
-    opacity:0.6;
-    text-decoration:none;
+/* TALLERES DISPONIBLES */
+
+.talleres-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: #e0e0e0;
+    border: var(--border);
 }
 
-@media (max-width:600px){
+.taller-card {
+    background: var(--white);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+}
 
-    h1 {
-        font-size:28px;
+.taller-card-nombre {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.taller-card-meta {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex: 1;
+}
+
+.taller-meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.taller-meta-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .4;
+    white-space: nowrap;
+}
+
+.taller-meta-val {
+    font-weight: 600;
+    text-align: right;
+}
+
+.taller-card-precio {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    margin-bottom: 20px;
+}
+
+.taller-card-precio span {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: .4;
+    letter-spacing: 1px;
+}
+
+.taller-card-cupo {
+    font-size: 11px;
+    letter-spacing: 1px;
+    opacity: .5;
+    margin-bottom: 20px;
+}
+
+.taller-card-cupo.agotado { color: #c0392b; opacity: 1; }
+
+.taller-card-whatsapp {
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--black);
+    opacity: .5;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: opacity .2s;
+}
+
+.taller-card-whatsapp:hover { opacity: 1; }
+
+.btn {
+    display: inline-block;
+    padding: 16px 28px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    transition: .2s;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: var(--black);
+    color: var(--white);
+}
+
+.btn-primary:hover { opacity: .8; }
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+    opacity: .3;
+    cursor: default;
+}
+
+.empty-state {
+    grid-column: 1/-1;
+    padding: 60px 32px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .3;
+    background: var(--white);
+}
+
+/* UBICACIÓN */
+
+.location-box {
+    border: var(--border);
+    padding: 40px;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.location-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* FOOTER: ver css/base.css */
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .steps { grid-template-columns: 1fr; }
+
+    .step {
+        border-right: none;
+        border-bottom: var(--border);
+        padding: 32px 0 !important;
     }
 
-    .subtitle {
-        font-size:16px;
+    .step:last-child { border-bottom: none; }
+
+    .aprende { grid-template-columns: 1fr; }
+
+    .aprende-card {
+        border-right: none !important;
+        padding: 24px 0 !important;
+        border-bottom: 1px solid #eee;
     }
 
-    .button {
-        width:100%;
-        text-align:center;
-        margin-right:0;
+    .aprende-card:last-child { border-bottom: none; }
+
+    .talleres-grid { grid-template-columns: 1fr; }
+
+    .whatsapp-cta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
     }
+
+    .whatsapp-cta .btn { width: 100%; }
+
+    footer { flex-direction: column; gap: 12px; text-align: center; }
 
 }
 
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
-<header>
-LA TIENDA DE ROLLOS — TALLER
-</header>
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-brand">La Tienda de Rollos</a>
+    <a href="/" class="nav-back">← Volver</a>
+</nav>
 
-<h1>Taller de Fotografía Analógica</h1>
-
-<p class="subtitle">
-Aprendé fotografía analógica desde cero en un taller práctico de 5 clases donde vas a usar cámaras de rollo, entender la exposición, revelar tus propios negativos y realizar copias en papel fotográfico.
-</p>
-
-<div class="info">
-
-<strong>Modalidad:</strong> Taller práctico y teórico<br>
-<strong>Duración:</strong> 5 clases<br>
-<strong>Cupo:</strong> 4 personas<br>
-<strong>Incluye:</strong> 2 rollos ByN + 1 rollo Cine/Color + químicos para el taller + papel fotográfico<br>
-<strong>Costo:</strong> $8820 UYU
-
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Formación fotográfica</div>
+    <h1 class="hero-title">Taller<br>analógico.</h1>
+    <p class="hero-desc">
+        Aprendé fotografía analógica desde cero en un taller práctico donde vas a usar cámaras
+        de rollo, entender la exposición, revelar tus propios negativos y realizar copias en papel fotográfico.
+    </p>
 </div>
 
+<!-- WHATSAPP CTA -->
+<div class="whatsapp-cta">
+    <div class="whatsapp-cta-left">
+        <div class="whatsapp-cta-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3C7.03 3 3 7.03 3 12c0 1.77.52 3.42 1.4 4.8L3.3 20.7l3.98-1.05A8.93 8.93 0 0 0 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.6 8.9c.2-.55.65-.5 1.05-.5.3 0 .45.02.6.35.2.4.65 1.5.7 1.6.06.13.1.28 0 .45-.1.18-.15.3-.3.46-.15.16-.3.35-.44.47-.15.14-.3.3-.13.6.17.32.78 1.28 1.68 2.07 1.15 1.02 2.1 1.34 2.42 1.5.32.14.5.12.68-.08.2-.2.8-.93.98-1.25.18-.32.38-.27.63-.16.27.1 1.7.8 2 .95.28.14.47.2.53.32.07.13.07.7-.16 1.38-.24.68-1.4 1.34-1.93 1.4-.5.06-1.1.1-1.77-.1-.4-.13-.94-.3-1.6-.6-2.85-1.24-4.7-4.13-4.85-4.32-.14-.2-1.17-1.56-1.17-2.98 0-1.4.75-2.1.98-2.4Z" fill="currentColor"/>
+            </svg>
+        </div>
+        <div>
+            <div class="whatsapp-cta-title">¿Tenés dudas sobre el taller?</div>
+            <div class="whatsapp-cta-desc">Escribinos por WhatsApp y te respondemos al toque.</div>
+        </div>
+    </div>
+    <a
+        class="btn btn-primary"
+        href="https://wa.me/59891243290?text=Hola!%20Tengo%20una%20consulta%20sobre%20el%20taller%20de%20fotograf%C3%ADa%20anal%C3%B3gica."
+        target="_blank"
+        rel="noopener"
+    >
+        Escribinos →
+    </a>
+</div>
+
+<!-- STEPS -->
+<div class="steps">
+    <div class="step">
+        <div class="step-num">Paso 01</div>
+        <div class="step-title">Elegí tu taller</div>
+        <div class="step-desc">Mirá las próximas fechas disponibles y elegí la que mejor te quede.</div>
+    </div>
+    <div class="step">
+        <div class="step-num">Paso 02</div>
+        <div class="step-title">Completá tus datos</div>
+        <div class="step-desc">Contanos tu experiencia y equipo para preparar mejor las clases.</div>
+    </div>
+    <div class="step">
+        <div class="step-num">Paso 03</div>
+        <div class="step-title">Pagá y reservá tu lugar</div>
+        <div class="step-desc">Pago con MercadoPago. Tu cupo queda confirmado al instante.</div>
+    </div>
+</div>
+
+<!-- QUÉ APRENDÉS -->
 <div class="section">
-
-<h2>Qué vas a aprender</h2>
-
-<ul>
-<li>Uso de cámaras analógicas</li>
-<li>Exposición (ISO, velocidad y apertura)</li>
-<li>Fotometría y medición de luz</li>
-<li>Salida fotográfica práctica</li>
-<li>Revelado con Caffenol y Rodinal</li>
-<li>Digitalización de negativos</li>
-<li>Copias en papel fotográfico</li>
-</ul>
-
+    <div class="section-header">
+        <span class="section-title">Qué vas a aprender</span>
+    </div>
+    <div class="aprende">
+        <div class="aprende-card">
+            <span class="aprende-tag">Cámara</span>
+            <ul>
+                <li>Uso de cámaras analógicas</li>
+                <li>Exposición (ISO, velocidad y apertura)</li>
+                <li>Fotometría y medición de luz</li>
+                <li>Salida fotográfica práctica</li>
+            </ul>
+        </div>
+        <div class="aprende-card">
+            <span class="aprende-tag">Laboratorio</span>
+            <ul>
+                <li>Revelado con Caffenol y Rodinal</li>
+                <li>Manejo de químicos y tiempos</li>
+                <li>Cuidado y secado de negativos</li>
+            </ul>
+        </div>
+        <div class="aprende-card">
+            <span class="aprende-tag">Copias</span>
+            <ul>
+                <li>Digitalización de negativos</li>
+                <li>Copias en papel fotográfico</li>
+                <li>Ajuste y selección final</li>
+            </ul>
+        </div>
+    </div>
 </div>
 
+<!-- TALLERES DISPONIBLES -->
 <div class="section">
-
-<h2>Próximos talleres</h2>
-
-<div class="workshop">
-
-<h3>Curso regular — comienza el Sabado 27 de Junio</h3>
-
-<p>
-Formato semanal de 5 clases.
-</p>
-
-<p>
-Fechas: 27 de junio + 4, 11, 18 y 25 de julio
-</p>
-
-<p>
-Horario: 10:00 a 13:00 hs
-</p>
-
-<p>
-Lugar: Punta del Este
-</p>
-
-<p>
-Ideal para quienes quieren aprender paso a paso y practicar entre clases.
-</p>
-
-<a 
-class="button" 
-href="https://wa.me/59891243290?text=Hola!%20Quiero%20reservar%20un%20lugar%20para%20el%20curso%20regular%20de%20fotograf%C3%ADa%20anal%C3%B3gica%20que%20comienza%20el%2010%20de%20junio."
->
-Reservar lugar
-</a>
-
+    <div class="section-header">
+        <span class="section-title">Próximos talleres</span>
+        <span class="section-count" id="talleres-count">—</span>
+    </div>
+    <div class="talleres-grid" id="talleres-grid">
+        <div class="empty-state">Cargando talleres...</div>
+    </div>
 </div>
 
+<!-- UBICACIÓN -->
+<div class="section" style="border-bottom:none">
+    <div class="location-box">
+        <span class="location-label">Dónde encontrarnos</span>
+        Calle 24 esquina 28<br>
+        Galería Paseo del Mar<br>
+        1er Piso, Local 114<br>
+        Punta del Este, Uruguay<br>
+        <br>
+        <a href="https://wa.me/59891243290" style="color:#111;font-size:12px;letter-spacing:1px;">
+            WhatsApp →
+        </a>
+    </div>
 </div>
 
-<a class="back" href="index.html">← Volver</a>
-
-</div>
+</div><!-- /container -->
 
 <footer>
-Punta del Este — Uruguay
+    <div class="container" style="width:100%;display:flex;justify-content:space-between;align-items:center">
+        <span>La Tienda de Rollos</span>
+        <span>Punta del Este — Uruguay</span>
+    </div>
 </footer>
+
+<script>
+
+async function cargarTalleres() {
+    const grid  = document.getElementById("talleres-grid")
+    const count = document.getElementById("talleres-count")
+
+    try {
+        const res = await fetch("/api/talleres")
+        const talleres = await res.json()
+        const activos = talleres.filter(t => t.activo !== false)
+
+        count.textContent = String(activos.length).padStart(2, "0")
+
+        if (activos.length === 0) {
+            grid.innerHTML = `<div class="empty-state">Por ahora no hay talleres programados</div>`
+            return
+        }
+
+        grid.innerHTML = activos.map(t => {
+            const disponibles = t.cupos_disponibles ?? t.cupo
+            const agotado     = disponibles <= 0
+            const cupoTexto   = agotado
+                ? "Cupo completo"
+                : disponibles === 1
+                    ? "Último cupo disponible"
+                    : `${disponibles} cupos disponibles`
+            const consultaMsg = encodeURIComponent(`Hola! Quería consultar sobre el taller "${t.nombre}" (${t.fecha}).`)
+
+            return `
+            <div class="taller-card">
+                <div class="taller-card-nombre">${t.nombre}</div>
+                <div class="taller-card-meta">
+                    <div class="taller-meta-row">
+                        <span class="taller-meta-label">Fecha</span>
+                        <span class="taller-meta-val">${t.fecha}</span>
+                    </div>
+                    <div class="taller-meta-row">
+                        <span class="taller-meta-label">Horario</span>
+                        <span class="taller-meta-val">${t.horario || "—"}</span>
+                    </div>
+                    <div class="taller-meta-row">
+                        <span class="taller-meta-label">Lugar</span>
+                        <span class="taller-meta-val">${t.lugar}, ${t.ciudad}</span>
+                    </div>
+                    <div class="taller-meta-row">
+                        <span class="taller-meta-label">Duración</span>
+                        <span class="taller-meta-val">${t.duracion || "—"}</span>
+                    </div>
+                    <div class="taller-meta-row">
+                        <span class="taller-meta-label">Incluye</span>
+                        <span class="taller-meta-val">${t.incluye || "—"}</span>
+                    </div>
+                </div>
+                <div class="taller-card-precio">$${t.precio} <span>UYU</span></div>
+                <div class="taller-card-cupo${agotado ? " agotado" : ""}">${cupoTexto}</div>
+                <a class="btn btn-primary" href="/inscripcion.html?taller=${encodeURIComponent(t.id)}">
+                    ${agotado ? "Anotarme en lista de espera →" : "Inscribirme →"}
+                </a>
+                <a class="taller-card-whatsapp" href="https://wa.me/59891243290?text=${consultaMsg}" target="_blank" rel="noopener">
+                    ¿Dudas sobre este taller? Consultá por WhatsApp
+                </a>
+            </div>
+        `}).join("")
+
+    } catch {
+        grid.innerHTML = `<div class="empty-state">Error cargando los talleres. Probá de nuevo más tarde.</div>`
+    }
+}
+
+cargarTalleres()
+
+</script>
 
 </body>
 </html>

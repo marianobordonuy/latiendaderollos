@@ -1,11 +1,14 @@
 import { Router } from "express"
 import multer from "multer"
+import rateLimit from "express-rate-limit"
 import { MercadoPagoConfig, Preference, Payment } from "mercadopago"
 import fs from "fs"
-import crypto from "crypto"
 import { loadOrders, saveOrders, loadPrecios } from "../lib/storage.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { sendImpresionConfirmada, sendImpresionLista } from "../lib/email.js"
+import { auth } from "../lib/auth.js"
+import { sanitizeFilename } from "../lib/zip.js"
+import { verifyMpSignature } from "../lib/mp.js"
 
 const router = Router()
 
@@ -13,19 +16,26 @@ const mp = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN
 })
 
+const pedidoLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
+
+const IMPRESION_STATUSES = ["PENDIENTE_PAGO", "RECIBIDO", "EN_PROCESO", "LISTO", "ENTREGADO"]
+
 const upload = multer({
     dest: "uploads/",
     limits: { fileSize: 500 * 1024 * 1024, files: 50 }
 })
 
-/* VER FOTO (protegido en server.js) */
-router.get("/foto/:key", (req, res) => {
+/* VER FOTO (protegido) */
+router.get("/foto/:key", auth, (req, res) => {
     const key = decodeURIComponent(req.params.key)
     res.redirect(`${process.env.R2_PUBLIC_URL_PRINTS}/${key}`)
 })
 
-/* UPDATE STATUS (protegido en server.js) */
-router.put("/:id/status", async (req, res) => {
+/* UPDATE STATUS (protegido) */
+router.put("/:id/status", auth, async (req, res) => {
+    if (!IMPRESION_STATUSES.includes(req.body.status)) {
+        return res.status(400).json({ error: "status inválido" })
+    }
     const orders = loadOrders()
     const order  = orders.find(o => o.id === req.params.id && o.tipo === "impresion")
     if (!order) return res.status(404).json({ error: "Pedido no encontrado" })
@@ -46,8 +56,8 @@ router.put("/:id/status", async (req, res) => {
     res.json(order)
 })
 
-/* DELETE (protegido en server.js) */
-router.delete("/:id", (req, res) => {
+/* DELETE (protegido) */
+router.delete("/:id", auth, (req, res) => {
     const orders = loadOrders()
     const index  = orders.findIndex(o => o.id === req.params.id && o.tipo === "impresion")
     if (index === -1) return res.status(404).json({ error: "Pedido no encontrado" })
@@ -56,8 +66,48 @@ router.delete("/:id", (req, res) => {
     res.json({ deleted: true })
 })
 
+/* VERIFICAR PAGO CON MP (protegido) — re-consulta el pago directo en MP por
+   external_reference. Sirve para pedidos que quedaron UNPAID porque el
+   webhook nunca llegó o falló la verificación de firma. */
+router.post("/:id/verificar-pago", auth, async (req, res) => {
+    const orders = loadOrders()
+    const order  = orders.find(o => o.id === req.params.id && o.tipo === "impresion")
+    if (!order) return res.status(404).json({ error: "Pedido no encontrado" })
+
+    try {
+        const payment  = new Payment(mp)
+        const result   = await payment.search({ options: { external_reference: order.id } })
+        const results  = result.results || []
+        // Puede haber más de un intento de pago (uno rechazado y otro aprobado);
+        // priorizamos el aprobado en vez de tomar el primero de la lista.
+        const pagoData = results.find(p => p.status === "approved") || results[0]
+        if (!pagoData) return res.status(404).json({ error: "MP no tiene ningún pago registrado para este pedido" })
+
+        const estado = pagoData.status
+        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
+            console.error(`Verificación MP: monto no coincide para ${order.id} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
+            return res.status(409).json({ error: "El monto del pago en MP no coincide con el total del pedido" })
+        }
+
+        order.mp_payment_id  = pagoData.id
+        order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()
+        order.updated_at     = new Date()
+        if (estado === "approved" && order.status === "PENDIENTE_PAGO") order.status = "RECIBIDO"
+        saveOrders(orders)
+
+        if (estado === "approved" && order.client.email) {
+            try { await sendImpresionConfirmada(order) } catch (e) { console.error("Error enviando email:", e.message) }
+        }
+
+        res.json(order)
+    } catch (err) {
+        console.error("Error verificando pago en MP:", err.message)
+        res.status(500).json({ error: "Error al consultar MP" })
+    }
+})
+
 /* CREAR PEDIDO */
-router.post("/pedido", upload.array("fotos"), async (req, res) => {
+router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) => {
     try {
         const body = JSON.parse(req.body.data)
         const { nombre, email, telefono, envio, nota, items } = body
@@ -67,8 +117,14 @@ router.post("/pedido", upload.array("fotos"), async (req, res) => {
         }
 
         // Calcular total y generar ID antes del upload
-        const PRECIOS  = loadPrecios()
-        const total    = items.reduce((sum, item) => sum + (PRECIOS[item.size] || 0) * item.qty, 0)
+        const PRECIOS = loadPrecios()
+        for (const item of items) {
+            const info = PRECIOS[item.size]
+            if (!info || info.activo === false) {
+                return res.status(400).json({ error: `Tamaño no disponible: ${item.size}` })
+            }
+        }
+        const total    = items.reduce((sum, item) => sum + PRECIOS[item.size].precio * item.qty, 0)
         const pedidoId = `IMP-${Date.now()}`
 
         // Subir fotos a R2 bucket film-prints organizadas por pedido
@@ -76,7 +132,7 @@ router.post("/pedido", upload.array("fotos"), async (req, res) => {
         for (const file of req.files) {
             const ext = file.originalname.split(".").pop().toLowerCase()
             if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) continue
-            const key = `${pedidoId}/${file.originalname}`
+            const key = `${pedidoId}/${sanitizeFilename(file.originalname)}`
             await uploadToR2({
                 bucket:      BUCKETS.prints,
                 key,
@@ -108,7 +164,7 @@ router.post("/pedido", upload.array("fotos"), async (req, res) => {
             id:          item.size,
             title:       `Copia ${item.size} cm`,
             quantity:    item.qty,
-            unit_price:  PRECIOS[item.size],
+            unit_price:  PRECIOS[item.size].precio,
             currency_id: "UYU"
         }))
 
@@ -140,7 +196,12 @@ router.post("/pedido", upload.array("fotos"), async (req, res) => {
 /* WEBHOOK MP */
 router.post("/webhook", async (req, res) => {
     try {
+        if (!verifyMpSignature(req)) {
+            console.error("Webhook MP: firma inválida o ausente")
+            return res.sendStatus(401)
+        }
         res.sendStatus(200)
+
         const { type, data } = req.body
         if (type !== "payment") return
 
@@ -150,8 +211,13 @@ router.post("/webhook", async (req, res) => {
         const estado   = pagoData.status
 
         const orders = loadOrders()
-        const order  = orders.find(o => o.id === pedidoId)
+        const order  = orders.find(o => o.id === pedidoId && o.tipo === "impresion")
         if (!order) return
+
+        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
+            console.error(`Webhook MP: monto no coincide para ${pedidoId} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
+            return
+        }
 
         order.mp_payment_id  = data.id
         order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()

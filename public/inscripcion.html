@@ -1,226 +1,506 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
-<title>Inscripción — Taller</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscripción al Taller — La Tienda de Rollos</title>
+<meta name="description" content="Inscribite y reservá tu lugar en el taller de fotografía analógica. Pago con MercadoPago.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/base.css">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
 
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background:#fff;
-    color:#111;
+/* HERO */
+
+.hero {
+    padding: 60px 0 50px;
+    border-bottom: var(--border);
 }
 
-.container {
-    width:90%;
-    max-width:800px;
-    margin:0 auto;
+.hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
 }
 
-header {
-    padding:40px 0;
-    font-size:12px;
-    letter-spacing:3px;
-    text-transform:uppercase;
+.hero-title {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
 }
 
-h1 {
-    font-size:28px;
-    margin-bottom:30px;
+/* FORM LAYOUT */
+
+.form-section {
+    padding: 60px 0 80px;
 }
 
-.info {
-    border:1px solid #111;
-    padding:30px;
-    margin-bottom:40px;
-    line-height:1.8;
+.form-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 60px;
+    align-items: start;
 }
 
-.section {
-    margin-bottom:50px;
+.form-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
 }
 
-.section h2 {
-    font-size:14px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin-bottom:20px;
+/* CAMPOS */
+
+.field {
+    margin-bottom: 16px;
 }
 
-/* ===== FORM ===== */
-
-form {
-    border:1px solid #111;
-    padding:30px;
+.field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .5;
+    margin-bottom: 6px;
 }
 
-label {
-    display:block;
-    font-size:11px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin-bottom:8px;
-    margin-top:20px;
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    padding: 12px;
+    font-size: 13px;
+    background: var(--white);
+    color: var(--black);
+    outline: none;
+    transition: border-color .2s;
+    font-family: inherit;
 }
 
-input, select, textarea {
-    width:100%;
-    border:1px solid #111;
-    padding:12px;
-    font-size:14px;
-    background:#fff;
+.field input:focus,
+.field select:focus,
+.field textarea:focus { border-color: var(--black); }
+
+.field textarea { min-height: 70px; resize: vertical; }
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
-textarea {
-    min-height:90px;
+/* SIDEBAR */
+
+.sidebar {
+    position: sticky;
+    top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #e0e0e0;
 }
 
-button {
-    margin-top:30px;
-    width:100%;
-    border:1px solid #111;
-    background:#fff;
-    padding:15px;
-    font-size:12px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    cursor:pointer;
-    transition:.2s;
+.sidebar-block {
+    background: var(--white);
+    padding: 28px;
 }
 
-button:hover {
-    background:#111;
-    color:#fff;
+.sidebar-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 20px;
 }
 
-/* ===== FEEDBACK ===== */
-
-.success {
-    display:none;
-    border:1px solid #111;
-    padding:30px;
-    text-align:center;
+.taller-resumen-nombre {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
 }
 
-.back {
-    margin-top:60px;
-    display:block;
-    font-size:12px;
-    opacity:0.6;
-    text-decoration:none;
+.taller-resumen-rows { display: grid; gap: 8px; margin-bottom: 20px; }
+
+.taller-resumen-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
 }
+
+.taller-resumen-row .label { opacity: .45; }
+.taller-resumen-row .val { font-weight: 600; text-align: right; }
+
+.taller-resumen-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 1px solid #ddd;
+    padding-top: 14px;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.taller-resumen-total span:last-child {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: .4;
+}
+
+.sold-out-notice {
+    display: none;
+    border-top: 1px solid #ddd;
+    padding-top: 14px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.sold-out-notice strong {
+    display: block;
+    font-size: 13px;
+    color: #c0392b;
+    margin-bottom: 4px;
+}
+
+.btn-pagar {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    background: var(--black);
+    color: var(--white);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s;
+    font-family: inherit;
+}
+
+.btn-pagar:hover { opacity: .85; }
+.btn-pagar:disabled { opacity: .35; cursor: default; }
+
+.error-box {
+    display: none;
+    border: var(--border);
+    padding: 60px;
+    text-align: center;
+}
+
+.error-box h2 { font-size: 22px; margin-bottom: 12px; }
+.error-box p { font-size: 14px; opacity: .6; margin-bottom: 24px; }
+
+.btn {
+    display: inline-block;
+    padding: 14px 24px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--black);
+    border: var(--border);
+    transition: .2s;
+}
+
+.btn:hover { background: var(--black); color: var(--white); }
+
+/* FOOTER (base en css/base.css) */
+
+footer { border-top: 1px solid #e0e0e0; }
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+    .form-layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .field-row { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 12px; }
+}
+
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
-<header>
-    Taller de Fotografía Analógica
-</header>
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-brand">La Tienda de Rollos</a>
+    <a href="/taller.html" class="nav-back">← Volver a talleres</a>
+</nav>
 
-<h1>Inscripción</h1>
-
-<div class="info">
-    Completá este formulario para confirmar tu inscripción.<br>
-    Nos ayuda a preparar mejor el taller según tu experiencia y equipo.
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Formación fotográfica</div>
+    <h1 class="hero-title">Inscripción</h1>
 </div>
 
-<form id="form" action="https://formspree.io/f/xdayjlzz" method="POST">
-
-    <label>Nombre completo</label>
-    <input type="text" name="nombre" required>
-
-    <label>Email</label>
-    <input type="email" name="email" required>
-
-    <label>Teléfono</label>
-    <input type="text" name="telefono">
-
-    <label>Nivel de experiencia</label>
-    <select name="nivel">
-        <option value="">Seleccionar</option>
-        <option>Principiante</option>
-        <option>Intermedio</option>
-        <option>Avanzado</option>
-    </select>
-
-    <label>¿Ya has experimentado fotografía analógica?</label>
-    <select name="analogica">
-        <option value="">Seleccionar</option>
-        <option>Sí</option>
-        <option>No</option>
-    </select>
-
-    <label>¿Qué cámara tenés?</label>
-    <input type="text" name="camara" placeholder="Ej: Canon AE-1, Nikon FM2, Yashica Mat...">
-
-    <label>¿Necesitás una cámara en préstamo?</label>
-    <select name="prestamo">
-        <option value="">Seleccionar</option>
-        <option>Sí</option>
-        <option>No</option>
-    </select>
-
-    <label>¿Tenés equipo de laboratorio?</label>
-    <select name="lab">
-        <option value="">Seleccionar</option>
-        <option>Sí</option>
-        <option>No</option>
-    </select>
-
-    <label>Si tenés equipo de laboratorio, detallá cuál</label>
-    <textarea name="detalle_lab"></textarea>
-
-    <label>¿Qué te gustaría aprender?</label>
-    <textarea name="objetivo"></textarea>
-
-    <!-- Anti spam -->
-    <input type="text" name="_gotcha" style="display:none">
-
-    <!-- Config -->
-    <input type="hidden" name="_subject" value="Nueva inscripción al taller">
-    <input type="hidden" name="_captcha" value="false">
-
-    <button type="submit">Enviar inscripción</button>
-
-</form>
-
-<div class="success" id="success">
-    <h2>Gracias</h2>
-    <p>Tu inscripción fue enviada correctamente.<br>Te vamos a contactar en breve.</p>
+<!-- SIN TALLER SELECCIONADO -->
+<div class="form-section error-box" id="error-box">
+    <h2>No encontramos ese taller</h2>
+    <p>Elegí una fecha disponible desde la página de talleres.</p>
+    <a href="/taller.html" class="btn">Ver talleres →</a>
 </div>
 
-<a href="/taller.html" class="back">← Volver</a>
+<!-- FORM -->
+<div class="form-section" id="form-section" style="display:none">
+
+    <div class="form-layout">
+
+        <!-- IZQUIERDA: formulario -->
+        <div>
+
+            <div class="form-label">Tus datos</div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label>Nombre completo</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" id="email" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Teléfono</label>
+                <input type="text" id="telefono">
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label>Nivel de experiencia</label>
+                    <select id="nivel">
+                        <option value="">Seleccionar</option>
+                        <option>Principiante</option>
+                        <option>Intermedio</option>
+                        <option>Avanzado</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>¿Ya experimentaste con fotografía analógica?</label>
+                    <select id="analogica">
+                        <option value="">Seleccionar</option>
+                        <option>Sí</option>
+                        <option>No</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>¿Qué cámara tenés?</label>
+                <input type="text" id="camara" placeholder="Ej: Canon AE-1, Nikon FM2, Yashica Mat...">
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label>¿Necesitás una cámara en préstamo?</label>
+                    <select id="prestamo">
+                        <option value="">Seleccionar</option>
+                        <option>Sí</option>
+                        <option>No</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>¿Tenés equipo de laboratorio?</label>
+                    <select id="lab">
+                        <option value="">Seleccionar</option>
+                        <option>Sí</option>
+                        <option>No</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Si tenés equipo de laboratorio, detallá cuál</label>
+                <textarea id="detalle_lab"></textarea>
+            </div>
+
+            <div class="field">
+                <label>¿Qué te gustaría aprender?</label>
+                <textarea id="objetivo"></textarea>
+            </div>
+
+        </div>
+
+        <!-- DERECHA: resumen del taller -->
+        <div class="sidebar">
+
+            <div class="sidebar-block">
+                <div class="sidebar-title">Taller elegido</div>
+                <div class="taller-resumen-nombre" id="r-nombre">—</div>
+                <div class="taller-resumen-rows">
+                    <div class="taller-resumen-row"><span class="label">Fecha</span><span class="val" id="r-fecha">—</span></div>
+                    <div class="taller-resumen-row"><span class="label">Horario</span><span class="val" id="r-horario">—</span></div>
+                    <div class="taller-resumen-row"><span class="label">Lugar</span><span class="val" id="r-lugar">—</span></div>
+                </div>
+                <div class="taller-resumen-total" id="total-row">
+                    <span>Total</span>
+                    <span id="r-precio">$— <span>UYU</span></span>
+                </div>
+                <div class="sold-out-notice" id="sold-out-notice">
+                    <strong>Cupo completo</strong>
+                    Dejanos tus datos y te avisamos apenas se libere un lugar.
+                </div>
+            </div>
+
+            <div class="sidebar-block" style="padding:0">
+                <button class="btn-pagar" id="btn-pagar" onclick="submitForm()">
+                    Pagar con MercadoPago
+                </button>
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
+
+<!-- ÉXITO LISTA DE ESPERA -->
+<div class="form-section error-box" id="espera-success-box">
+    <h2>¡Listo!</h2>
+    <p>Te anotamos en la lista de espera. Te contactamos por email o WhatsApp apenas se libere un cupo.</p>
+    <a href="/taller.html" class="btn">Ver otros talleres →</a>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+    <span>La Tienda de Rollos</span>
+    <span>Punta del Este — Uruguay</span>
+</footer>
 
 <script>
-const form = document.getElementById("form");
-const success = document.getElementById("success");
 
-form.addEventListener("submit", async function(e) {
-    e.preventDefault();
+const params   = new URLSearchParams(window.location.search)
+const tallerId = params.get("taller")
+let taller     = null
+let modoEspera = false
 
-    const data = new FormData(form);
+async function init() {
+    if (!tallerId) return mostrarError()
 
-    const res = await fetch(form.action, {
-        method: "POST",
-        body: data,
-        headers: { "Accept": "application/json" }
-    });
-
-    if (res.ok) {
-        form.style.display = "none";
-        success.style.display = "block";
-    } else {
-        alert("Error al enviar. Probá de nuevo.");
+    try {
+        const res = await fetch("/api/talleres")
+        const talleres = await res.json()
+        taller = talleres.find(t => t.id === tallerId && t.activo !== false)
+    } catch {
+        taller = null
     }
-});
+
+    if (!taller) return mostrarError()
+
+    document.getElementById("r-nombre").textContent  = taller.nombre
+    document.getElementById("r-fecha").textContent    = taller.fecha
+    document.getElementById("r-horario").textContent  = taller.horario || "—"
+    document.getElementById("r-lugar").textContent    = `${taller.lugar}, ${taller.ciudad}`
+    document.getElementById("r-precio").innerHTML     = `$${taller.precio} <span>UYU</span>`
+
+    modoEspera = (taller.cupos_disponibles ?? taller.cupo) <= 0
+    actualizarUI()
+
+    document.getElementById("form-section").style.display = "block"
+}
+
+function actualizarUI() {
+    document.getElementById("total-row").style.display       = modoEspera ? "none"  : "flex"
+    document.getElementById("sold-out-notice").style.display = modoEspera ? "block" : "none"
+    document.getElementById("btn-pagar").textContent = modoEspera
+        ? "Anotarme en lista de espera"
+        : "Pagar con MercadoPago"
+}
+
+function mostrarError() {
+    document.getElementById("error-box").style.display = "block"
+}
+
+function datosFormulario() {
+    return {
+        taller_id:   taller.id,
+        nombre:      document.getElementById("nombre").value.trim(),
+        email:       document.getElementById("email").value.trim(),
+        telefono:    document.getElementById("telefono").value.trim(),
+        nivel:       document.getElementById("nivel").value,
+        analogica:   document.getElementById("analogica").value,
+        camara:      document.getElementById("camara").value.trim(),
+        prestamo:    document.getElementById("prestamo").value,
+        lab:         document.getElementById("lab").value,
+        detalle_lab: document.getElementById("detalle_lab").value.trim(),
+        objetivo:    document.getElementById("objetivo").value.trim()
+    }
+}
+
+async function submitForm() {
+
+    const body = datosFormulario()
+
+    if (!body.nombre || !body.email) {
+        alert("Completá tu nombre y email para continuar.")
+        return
+    }
+
+    const btn = document.getElementById("btn-pagar")
+    btn.disabled    = true
+    btn.textContent = modoEspera ? "Anotando..." : "Procesando..."
+
+    try {
+        if (!modoEspera) {
+            const res = await fetch("/api/talleres/inscripcion", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify(body)
+            })
+
+            if (!res.ok) {
+                const err = await res.json()
+
+                // El cupo se completó justo mientras llenaba el formulario:
+                // lo pasamos a modo lista de espera en vez de solo mostrar un error.
+                if (res.status === 400 && (err.error || "").toLowerCase().includes("cupo")) {
+                    modoEspera = true
+                    actualizarUI()
+                    alert("Justo se completó el cupo mientras completabas el formulario. Volvé a apretar el botón para anotarte en la lista de espera.")
+                    btn.disabled = false
+                    return
+                }
+
+                throw new Error(err.error || "Error del servidor")
+            }
+
+            const data = await res.json()
+            window.location.href = data.init_point
+            return
+        }
+
+        const res = await fetch("/api/talleres/lista-espera", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify(body)
+        })
+
+        if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || "Error del servidor")
+        }
+
+        document.getElementById("form-section").style.display = "none"
+        document.getElementById("espera-success-box").style.display = "block"
+
+    } catch (err) {
+        alert("Error: " + err.message)
+        btn.disabled    = false
+        btn.textContent = modoEspera ? "Anotarme en lista de espera" : "Pagar con MercadoPago"
+    }
+}
+
+init()
+
 </script>
 
 </body>

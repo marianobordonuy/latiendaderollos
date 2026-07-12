@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Estación de Laboratorio — La Tienda de Rollos</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<style>
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.screen {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.screen.active { display: flex; }
+
+.eyebrow {
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
+}
+
+/* DISPLAY DEL CÓDIGO */
+
+.code-display {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: 10px;
+    min-height: 72px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.code-display .placeholder { opacity: .2; }
+
+.error-msg {
+    font-size: 15px;
+    color: #ff6b5e;
+    margin-bottom: 20px;
+    min-height: 20px;
+    text-align: center;
+}
+
+/* PAD NUMÉRICO */
+
+.pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 360px;
+}
+
+.pad button {
+    font-family: inherit;
+    font-size: 28px;
+    font-weight: 600;
+    padding: 26px 0;
+    background: #222;
+    color: #fff;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: background .1s;
+}
+
+.pad button:active { background: #3a3a3a; }
+
+.pad .key-clear { font-size: 16px; letter-spacing: 1px; }
+.pad .key-enter { background: #fff; color: #111; }
+.pad .key-enter:active { background: #ddd; }
+
+/* RESULTADO DE BÚSQUEDA */
+
+.result-card {
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid #333;
+    padding: 28px;
+    margin-bottom: 24px;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.result-row:last-child { border-bottom: none; }
+
+.result-label { opacity: .4; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+.result-val { font-weight: 600; text-align: right; }
+
+.status-now {
+    font-size: 30px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.btn-avanzar {
+    width: 100%;
+    max-width: 420px;
+    padding: 26px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: #2a8a3e;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 14px;
+}
+
+.btn-avanzar:active { background: #256e33; }
+.btn-avanzar:disabled { background: #333; color: #777; cursor: default; }
+
+.btn-secundario {
+    width: 100%;
+    max-width: 420px;
+    padding: 18px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: transparent;
+    color: #fff;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+.logout-corner {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .3;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.logout-corner:active { opacity: .8; }
+
+.check-icon { font-size: 60px; color: #2a8a3e; margin-bottom: 16px; }
+
+</style>
+</head>
+<body>
+
+<button class="logout-corner" id="btn-logout" onclick="salir()" style="display:none">Salir</button>
+
+<!-- PANTALLA PIN -->
+<div class="screen active" id="screen-pin">
+    <div class="eyebrow">Estación de Laboratorio</div>
+    <div class="code-display" id="pin-display"><span class="placeholder">— — — —</span></div>
+    <div class="error-msg" id="pin-error"></div>
+    <div class="pad" id="pin-pad"></div>
+</div>
+
+<!-- PANTALLA BÚSQUEDA -->
+<div class="screen" id="screen-buscar">
+    <div class="eyebrow">Buscar por Twin</div>
+    <div class="code-display" id="twin-display"><span class="placeholder">Ingresá el twin</span></div>
+    <div class="error-msg" id="twin-error"></div>
+    <div class="pad" id="twin-pad"></div>
+</div>
+
+<!-- PANTALLA RESULTADO -->
+<div class="screen" id="screen-resultado">
+    <div class="eyebrow" id="resultado-twin">Twin —</div>
+    <div class="result-card">
+        <div class="result-row"><span class="result-label">Cliente</span><span class="result-val" id="r-cliente">—</span></div>
+        <div class="result-row"><span class="result-label">Rollo</span><span class="result-val" id="r-rollo">—</span></div>
+        <div class="result-row"><span class="result-label">Proceso</span><span class="result-val" id="r-proceso">—</span></div>
+    </div>
+    <div class="status-now" id="r-estado">—</div>
+    <button class="btn-avanzar" id="btn-avanzar" onclick="avanzar()">Avanzar →</button>
+    <button class="btn-secundario" onclick="volverABuscar()">Buscar otro</button>
+</div>
+
+<!-- PANTALLA CONFIRMACIÓN -->
+<div class="screen" id="screen-confirmacion">
+    <div class="check-icon">✓</div>
+    <div class="status-now" id="c-estado">—</div>
+    <div class="error-msg" style="color:#aaa" id="c-detalle"></div>
+    <button class="btn-secundario" onclick="volverABuscar()" style="margin-top:20px">Buscar otro</button>
+</div>
+
+<script>
+
+const STATUS_LABELS = {
+    RECEIVED:   "Recibido",
+    QUEUE:      "En cola",
+    DEVELOPING: "Revelando",
+    DRYING:     "Secando",
+    SCANNING:   "Escaneando",
+    EDITING:    "Procesando",
+    READY:      "Listo para retirar",
+    DELIVERED:  "Entregado"
+}
+
+function traducir(status) { return STATUS_LABELS[status] || status }
+
+function mostrarPantalla(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"))
+    document.getElementById(id).classList.add("active")
+}
+
+/* ===== PIN ===== */
+
+let pinDigits = ""
+
+function renderPad(containerId, onDigit, onClear, onEnter) {
+    const el = document.getElementById(containerId)
+    const keys = ["1","2","3","4","5","6","7","8","9","clear","0","enter"]
+    el.innerHTML = keys.map(k => {
+        if (k === "clear") return `<button class="key-clear" data-k="clear">Borrar</button>`
+        if (k === "enter") return `<button class="key-enter" data-k="enter">OK</button>`
+        return `<button data-k="${k}">${k}</button>`
+    }).join("")
+    el.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const k = btn.dataset.k
+            if (k === "clear") onClear()
+            else if (k === "enter") onEnter()
+            else onDigit(k)
+        })
+    })
+}
+
+function renderPinDisplay() {
+    const display = document.getElementById("pin-display")
+    if (pinDigits.length === 0) {
+        display.innerHTML = `<span class="placeholder">— — — —</span>`
+    } else {
+        display.textContent = "•".repeat(pinDigits.length)
+    }
+}
+
+renderPad("pin-pad",
+    d => { pinDigits += d; renderPinDisplay() },
+    () => { pinDigits = pinDigits.slice(0, -1); renderPinDisplay() },
+    () => enviarPin()
+)
+
+async function enviarPin() {
+    const errorEl = document.getElementById("pin-error")
+    errorEl.textContent = ""
+    if (!pinDigits) return
+
+    try {
+        const res = await fetch("/api/estacion/login", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ pin: pinDigits })
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            errorEl.textContent = err.error || "PIN incorrecto"
+            pinDigits = ""
+            renderPinDisplay()
+            return
+        }
+        pinDigits = ""
+        entrarAEstacion()
+    } catch {
+        errorEl.textContent = "Error de conexión"
+    }
+}
+
+function entrarAEstacion() {
+    document.getElementById("btn-logout").style.display = "block"
+    mostrarPantalla("screen-buscar")
+}
+
+async function salir() {
+    try { await fetch("/api/estacion/logout", { method: "POST" }) } catch {}
+    document.getElementById("btn-logout").style.display = "none"
+    document.getElementById("pin-error").textContent = ""
+    mostrarPantalla("screen-pin")
+}
+
+/* ===== BUSCAR POR TWIN ===== */
+
+let twinDigits = ""
+
+function renderTwinDisplay() {
+    const display = document.getElementById("twin-display")
+    display.innerHTML = twinDigits.length === 0
+        ? `<span class="placeholder">Ingresá el twin</span>`
+        : twinDigits
+}
+
+renderPad("twin-pad",
+    d => { twinDigits += d; renderTwinDisplay() },
+    () => { twinDigits = twinDigits.slice(0, -1); renderTwinDisplay() },
+    () => buscarTwin()
+)
+
+let ordenActual = null
+
+async function buscarTwin() {
+    const errorEl = document.getElementById("twin-error")
+    errorEl.textContent = ""
+    if (!twinDigits) return
+
+    try {
+        const res = await fetch(`/api/estacion/orden/${encodeURIComponent(twinDigits)}`)
+
+        if (res.status === 401) return salir()
+
+        if (!res.ok) {
+            const err = await res.json()
+            errorEl.textContent = err.error || "No encontrado"
+            return
+        }
+
+        ordenActual = await res.json()
+        mostrarResultado()
+
+    } catch {
+        errorEl.textContent = "Error de conexión"
+    }
+}
+
+function mostrarResultado() {
+    document.getElementById("resultado-twin").textContent = `Twin ${ordenActual.twin_check || ordenActual.public_code}`
+    document.getElementById("r-cliente").textContent = ordenActual.client_name || "—"
+    document.getElementById("r-rollo").textContent   = ordenActual.roll || "—"
+    document.getElementById("r-proceso").textContent = `${ordenActual.process || "—"} · ${ordenActual.quality || "—"}`
+    document.getElementById("r-estado").textContent  = traducir(ordenActual.status)
+
+    const btn = document.getElementById("btn-avanzar")
+    if (ordenActual.next_status) {
+        btn.disabled    = false
+        btn.textContent = `Avanzar a: ${traducir(ordenActual.next_status)} →`
+    } else {
+        btn.disabled    = true
+        btn.textContent = "Ya está en el último estado"
+    }
+
+    mostrarPantalla("screen-resultado")
+}
+
+async function avanzar() {
+    const btn = document.getElementById("btn-avanzar")
+    btn.disabled = true
+    btn.textContent = "Actualizando..."
+
+    try {
+        const res = await fetch(`/api/estacion/orden/${encodeURIComponent(twinDigits)}/avanzar`, { method: "PUT" })
+
+        if (res.status === 401) return salir()
+
+        if (!res.ok) {
+            const err = await res.json()
+            alert(err.error || "No se pudo actualizar")
+            mostrarResultado()
+            return
+        }
+
+        const data = await res.json()
+        document.getElementById("c-estado").textContent = traducir(data.status)
+        document.getElementById("c-detalle").textContent = `${data.client_name || ""} — ${data.roll || ""}`.trim()
+        mostrarPantalla("screen-confirmacion")
+
+    } catch {
+        alert("Error de conexión")
+        mostrarResultado()
+    }
+}
+
+function volverABuscar() {
+    twinDigits = ""
+    ordenActual = null
+    renderTwinDisplay()
+    document.getElementById("twin-error").textContent = ""
+    mostrarPantalla("screen-buscar")
+}
+
+/* ===== TECLADO FÍSICO (numpad o teclado normal) ===== */
+
+document.addEventListener("keydown", e => {
+    const pantallaPin = document.getElementById("screen-pin").classList.contains("active")
+    const pantallaBuscar = document.getElementById("screen-buscar").classList.contains("active")
+    if (!pantallaPin && !pantallaBuscar) return
+
+    if (e.key >= "0" && e.key <= "9") {
+        if (pantallaPin) { pinDigits += e.key; renderPinDisplay() }
+        else { twinDigits += e.key; renderTwinDisplay() }
+    } else if (e.key === "Backspace") {
+        if (pantallaPin) { pinDigits = pinDigits.slice(0, -1); renderPinDisplay() }
+        else { twinDigits = twinDigits.slice(0, -1); renderTwinDisplay() }
+    } else if (e.key === "Enter") {
+        if (pantallaPin) enviarPin()
+        else buscarTwin()
+    }
+})
+
+/* ===== INIT: ¿ya hay sesión activa? ===== */
+
+async function init() {
+    try {
+        const res = await fetch("/api/estacion/session")
+        if (res.ok) entrarAEstacion()
+    } catch {}
+}
+
+init()
+
+</script>
+
+</body>
+</html>

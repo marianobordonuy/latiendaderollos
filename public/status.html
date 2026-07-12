@@ -1,113 +1,431 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Orden Status - La Tienda de Rollos</title>
-    <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estado de tu rollo — La Tienda de Rollos</title>
+<meta name="description" content="Consultá el estado de tu rollo en La Tienda de Rollos.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/base.css">
+
+<style>
+
+/* HERO */
+
+.hero {
+    padding: 80px 0 60px;
+    border-bottom: var(--border);
+}
+
+.hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 24px;
+}
+
+.hero-title {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    line-height: .95;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+}
+
+.hero-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    opacity: .6;
+    max-width: 480px;
+}
+
+/* SEARCH */
+
+.search-section {
+    padding: 60px 0;
+    border-bottom: var(--border);
+}
+
+.search-layout {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    max-width: 680px;
+}
+
+.track-input {
+    width: 100%;
+    padding: 18px 20px;
+    border: var(--border);
+    background: var(--white);
+    font-size: 16px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+}
+
+.track-input:focus { border-color: #555; }
+
+.track-button {
+    padding: 18px 32px;
+    border: none;
+    background: var(--black);
+    color: var(--white);
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: opacity .2s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.track-button:hover { opacity: .85; }
+
+/* RESULT */
+
+.result-section {
+    padding: 60px 0;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #e0e0e0;
+}
+
+.status-block {
+    background: var(--white);
+    padding: 40px;
+}
+
+.status-block.full {
+    grid-column: 1 / -1;
+}
+
+.block-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .4;
+    margin-bottom: 16px;
+}
+
+.status-main {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+}
+
+.status-code {
+    font-size: 12px;
+    letter-spacing: 4px;
+    opacity: .3;
+}
+
+.meta-rows {
+    display: grid;
+    gap: 12px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.meta-row:last-child { border-bottom: none; }
+
+.meta-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .4;
+}
+
+.meta-val { font-weight: 500; }
+
+/* TIMELINE */
+
+.timeline-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 20px;
+}
+
+.timeline-item:last-child { border-bottom: none; }
+
+.timeline-status {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.timeline-date {
+    opacity: .4;
+    white-space: nowrap;
+}
+
+/* PROGRESS BAR */
+
+.progress-wrap {
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 3px;
+    background: #e0e0e0;
+    margin-bottom: 16px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--black);
+    transition: width .6s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: .3;
+}
+
+/* EMPTY / ERROR */
+
+.message-block {
+    padding: 80px 40px;
+    text-align: center;
+    border: var(--border);
+    background: var(--gray);
+}
+
+.message-block h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.message-block p {
+    font-size: 14px;
+    opacity: .55;
+}
+
+/* FOOTER (base en css/base.css) */
+
+footer {
+    border-top: 1px solid #e0e0e0;
+    margin-top: 40px;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .search-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-block.full { grid-column: 1; }
+
+    footer { flex-direction: column; gap: 12px; }
+}
+
+</style>
 </head>
 <body>
 
 <div class="container">
 
-    <h1>Revisa el status de tu orden de revelado</h1>
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-brand">La Tienda de Rollos</a>
+    <a href="/" class="nav-back">← Volver</a>
+</nav>
 
-    <input id="code" placeholder="A4F92C">
-
-    <button onclick="checkStatus()">
-        Revisar Orden
-    </button>
-
-    <div id="result"></div>
-
-    <a class="back" href="index.html">← Volver</a>
-
-    <br
-
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Film Tracking</div>
+    <h1 class="hero-title">Estado<br>de tu rollo.</h1>
+    <p class="hero-desc">
+        Ingresá el código que te dimos al dejar tu película en el laboratorio.
+    </p>
 </div>
+
+<!-- SEARCH -->
+<div class="search-section">
+    <div class="search-layout">
+        <input
+            id="code"
+            class="track-input"
+            placeholder="A4F92C"
+            maxlength="6"
+        >
+        <button class="track-button" onclick="checkStatus()">
+            Consultar
+        </button>
+    </div>
+</div>
+
+<!-- RESULT -->
+<div class="result-section">
+    <div id="result"></div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+    <span>La Tienda de Rollos</span>
+    <span>Punta del Este — Uruguay</span>
+</footer>
 
 <script>
 
-const params =
-    new URLSearchParams(window.location.search);
+const STATUSES = ["RECEIVED","QUEUE","DEVELOPING","DRYING","SCANNING","EDITING","READY","DELIVERED"]
 
-const autoCode = params.get("code");
+function translateStatus(status) {
+    const map = {
+        RECEIVED:   "Recibido",
+        QUEUE:      "En cola",
+        DEVELOPING: "Revelando",
+        DRYING:     "Secando",
+        SCANNING:   "Escaneando",
+        EDITING:    "Procesando",
+        READY:      "Listo para retirar",
+        DELIVERED:  "Entregado"
+    }
+    return map[status] || status
+}
+
+function progressPercent(status) {
+    const idx = STATUSES.indexOf(status)
+    if (idx === -1) return 0
+    return Math.round((idx / (STATUSES.length - 1)) * 100)
+}
+
+// Auto-check desde query param ?code=XXXXX
+const params   = new URLSearchParams(window.location.search)
+const autoCode = params.get("code")
 
 if (autoCode) {
-
-    document.getElementById("code").value =
-        autoCode;
-
-    checkStatus();
+    document.getElementById("code").value = autoCode.toUpperCase()
+    checkStatus()
 }
+
+document.getElementById("code").addEventListener("keydown", e => {
+    if (e.key === "Enter") checkStatus()
+})
 
 async function checkStatus() {
 
-    const code =
-        document.getElementById("code")
-        .value
-        .toUpperCase();
+    const code = document.getElementById("code").value.trim().toUpperCase()
+    if (!code) return
 
-    const res =
-        await fetch(`/api/status/${code}`);
+    const result = document.getElementById("result")
+    result.innerHTML = `
+        <div class="message-block">
+            <p style="letter-spacing:3px;font-size:11px;text-transform:uppercase;opacity:.4">Consultando...</p>
+        </div>`
 
-    if (!res.ok) {
+    try {
+        const res = await fetch(`/api/status/${code}`)
 
-        document.getElementById("result")
-            .innerHTML = `
-                <div class="card">
-                    Orden no encontrada!
+        if (!res.ok) {
+            result.innerHTML = `
+                <div class="message-block">
+                    <h2>Código no encontrado</h2>
+                    <p>Verificá que el código sea correcto.<br>Si el problema persiste contactanos por WhatsApp.</p>
+                </div>`
+            return
+        }
+
+        const data = await res.json()
+        const pct  = progressPercent(data.status)
+
+        result.innerHTML = `
+        <div class="status-grid">
+
+            <div class="status-block full">
+                <div class="progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:${pct}%"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <span>Recibido</span>
+                        <span>Revelando</span>
+                        <span>Escaneando</span>
+                        <span>Listo</span>
+                    </div>
                 </div>
-            `;
-
-        return;
-    }
-
-    const data = await res.json();
-
-    let timelineHtml = "";
-
-    data.timeline.forEach(item => {
-
-        timelineHtml += `
-            <div class="timeline-item">
-                ${item.status}
-                <br>
-                ${new Date(item.date)
-                    .toLocaleString()}
             </div>
-        `;
-    });
 
-    document.getElementById("result")
-        .innerHTML = `
+            <div class="status-block">
+                <div class="block-label">Estado actual</div>
+                <div class="status-main">${translateStatus(data.status)}</div>
+                <div class="status-code">${data.public_code}</div>
+            </div>
 
-        <div class="card">
+            <div class="status-block">
+                <div class="block-label">Detalle</div>
+                <div class="meta-rows">
+                    <div class="meta-row">
+                        <span class="meta-label">Rollo</span>
+                        <span class="meta-val">${data.film.roll}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Proceso</span>
+                        <span class="meta-val">${data.film.process}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Calidad</span>
+                        <span class="meta-val">${data.film.quality}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Entrega estimada</span>
+                        <span class="meta-val">${data.delivery_date || "a confirmar"}</span>
+                    </div>
+                </div>
+            </div>
 
-            <h2>${data.public_code}</h2>
+            <div class="status-block full">
+                <div class="block-label">Historial</div>
+                ${data.timeline.map(item => `
+                    <div class="timeline-item">
+                        <span class="timeline-status">${translateStatus(item.status)}</span>
+                        <span class="timeline-date">${new Date(item.date).toLocaleDateString("es-UY", { day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" })}</span>
+                    </div>
+                `).join("")}
+            </div>
 
-            <br>
+        </div>`
 
-            <p>Status: ${data.status}</p>
-
-            <p>Roll: ${data.film.roll}</p>
-
-            <p>Process: ${data.film.process}</p>
-
-            <p>Quality: ${data.film.quality}</p>
-
-            <p>Delivery:
-                ${data.delivery_date}
-            </p>
-
-            <br>
-
-            <h3>TIMELINE</h3>
-
-            <br>
-
-            ${timelineHtml}
-
-        </div>
-    `;
+    } catch {
+        result.innerHTML = `
+            <div class="message-block">
+                <h2>Error de conexión</h2>
+                <p>No pudimos conectar con el servidor. Intentá de nuevo.</p>
+            </div>`
+    }
 }
 
 </script>

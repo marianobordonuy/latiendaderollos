@@ -7,61 +7,9 @@
 <title>Copias Fotográficas — La Tienda de Rollos</title>
 <meta name="description" content="Pedí copias de tus fotos en papel fotográfico profesional. 10x15, 13x18, 15x21, 20x30. Retiro en local o envío.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/base.css">
 
 <style>
-
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-:root {
-    --black:  #111;
-    --white:  #fff;
-    --gray:   #f5f5f5;
-    --border: 1px solid #111;
-}
-
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--white);
-    color: var(--black);
-    -webkit-font-smoothing: antialiased;
-}
-
-.container {
-    width: 90%;
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-/* NAV */
-
-nav {
-    padding: 32px 0 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: var(--border);
-}
-
-.nav-brand {
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--black);
-}
-
-.nav-back {
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-decoration: none;
-    color: var(--black);
-    opacity: .5;
-    transition: opacity .2s;
-}
-
-.nav-back:hover { opacity: 1; }
 
 /* HERO */
 
@@ -102,19 +50,16 @@ nav {
 .precios-hero {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: #e0e0e0;
     border: var(--border);
     min-width: 280px;
 }
 
 .precio-item {
     padding: 20px 24px;
-    border-right: var(--border);
-    border-bottom: var(--border);
+    background: var(--white);
 }
-
-.precio-item:nth-child(2n) { border-right: none; }
-.precio-item:nth-child(3),
-.precio-item:nth-child(4)  { border-bottom: none; }
 
 .precio-size {
     font-size: 10px;
@@ -452,19 +397,9 @@ nav {
 .btn-pagar:hover { opacity: .85; }
 .btn-pagar:disabled { opacity: .35; cursor: default; }
 
-/* FOOTER */
+/* FOOTER (base en css/base.css) */
 
-footer {
-    padding: 60px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    opacity: .4;
-    border-top: 1px solid #e0e0e0;
-}
+footer { border-top: 1px solid #e0e0e0; }
 
 /* MOBILE */
 
@@ -519,22 +454,7 @@ footer {
     </div>
 
     <div class="precios-hero" id="tabla-precios">
-        <div class="precio-item">
-            <div class="precio-size">10 × 15</div>
-            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
-        </div>
-        <div class="precio-item">
-            <div class="precio-size">13 × 18</div>
-            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
-        </div>
-        <div class="precio-item">
-            <div class="precio-size">15 × 21</div>
-            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
-        </div>
-        <div class="precio-item">
-            <div class="precio-size">20 × 30</div>
-            <div class="precio-val">— <span class="precio-unit">UYU</span></div>
-        </div>
+        <div class="precio-item"><div class="precio-size">Cargando...</div></div>
     </div>
 
 </div>
@@ -654,20 +574,25 @@ footer {
 
 const PRECIOS = {}
 
+function tamaniosActivos() {
+    return Object.keys(PRECIOS).filter(s => PRECIOS[s].activo)
+}
+
 /* Cargar precios */
 async function cargarPrecios() {
     try {
         const res  = await fetch("/api/precios")
         const data = await res.json()
         Object.assign(PRECIOS, data)
-        const sizes  = ["10x15","13x18","15x21","20x30"]
-        const items  = document.querySelectorAll("#tabla-precios .precio-item")
-        sizes.forEach((size, i) => {
-            if (items[i] && data[size]) {
-                items[i].querySelector(".precio-val").innerHTML =
-                    `$${data[size]} <span class="precio-unit">UYU</span>`
-            }
-        })
+
+        const activos = tamaniosActivos()
+        const cont = document.getElementById("tabla-precios")
+        cont.innerHTML = activos.map(size => `
+            <div class="precio-item">
+                <div class="precio-size">${size.replace("x", " × ")}</div>
+                <div class="precio-val">$${PRECIOS[size].precio} <span class="precio-unit">UYU</span></div>
+            </div>
+        `).join("")
     } catch {}
 }
 
@@ -699,10 +624,12 @@ fileInput.addEventListener("change", () => {
 })
 
 function agregarFotos(files) {
+    const activos = tamaniosActivos()
+    const defaultSize = activos[0]
     for (const file of files) {
         const ext = file.name.split(".").pop().toLowerCase()
         if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) continue
-        fotos.push({ file, url: URL.createObjectURL(file), size: "10x15", qty: 1 })
+        fotos.push({ file, url: URL.createObjectURL(file), size: defaultSize, qty: 1 })
     }
     renderFotos()
 }
@@ -713,6 +640,10 @@ function renderFotos() {
     const empty  = document.getElementById("empty-state")
     const btn    = document.getElementById("btn-pagar")
     const resumen = document.getElementById("resumen-block")
+
+    // Si algún tamaño quedó inactivo mientras había fotos cargadas, reasignar
+    const activos = tamaniosActivos()
+    fotos.forEach(f => { if (!activos.includes(f.size)) f.size = activos[0] })
 
     if (fotos.length === 0) {
         grid.innerHTML = ""
@@ -735,8 +666,8 @@ function renderFotos() {
                 <div class="foto-name">${f.file.name}</div>
                 <div class="foto-selects">
                     <select onchange="cambiarSize(${i}, this.value)">
-                        ${Object.keys(PRECIOS).map(s => `
-                            <option value="${s}" ${f.size === s ? "selected" : ""}>${s} — $${PRECIOS[s]}</option>
+                        ${activos.map(s => `
+                            <option value="${s}" ${f.size === s ? "selected" : ""}>${s} — $${PRECIOS[s].precio}</option>
                         `).join("")}
                     </select>
                     <input type="number" min="1" max="99" value="${f.qty}"
@@ -769,7 +700,7 @@ function renderResumen() {
     let html  = ""
 
     for (const [size, qty] of Object.entries(grupos)) {
-        const sub = (PRECIOS[size] || 0) * qty
+        const sub = (PRECIOS[size]?.precio || 0) * qty
         total    += sub
         html     += `
             <div class="resumen-row">

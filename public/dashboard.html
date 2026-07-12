@@ -196,14 +196,68 @@ body {
     flex-direction: column;
 }
 
+.order-card.stale { border-color: #c0392b; border-width: 1px 1px 1px 4px; }
+
+.stale-badge {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #c0392b;
+    margin-bottom: 12px;
+}
+
 .order-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 14px;
+    gap: 10px;
 }
 
-.order-code { font-size:18px; font-weight:700; letter-spacing:3px; }
+.order-select { width: auto; margin-top: 3px; flex-shrink: 0; }
+
+.order-code { font-size:18px; font-weight:700; letter-spacing:3px; flex: 1; }
+
+.bulk-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    font-size: 12px;
+}
+
+.bulk-toolbar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.bulk-toolbar input[type=checkbox] { width: auto; }
+
+.bulk-toolbar select {
+    border: 1px solid #e0e0e0;
+    padding: 8px 10px;
+    font-size: 12px;
+    background: #fff;
+    color: #111;
+    outline: none;
+}
+
+.bulk-toolbar button {
+    border: 1px solid #111;
+    background: #111;
+    color: #fff;
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .2s;
+}
+
+.bulk-toolbar button:disabled { opacity: .35; cursor: default; }
+.bulk-toolbar button:hover:not(:disabled) { opacity: .8; }
+
+.bulk-count { opacity: .5; }
 
 .status-badge {
     font-size: 9px;
@@ -428,6 +482,73 @@ input[type=file] { display:none; }
     color: #333;
 }
 
+#talleres-inscripciones,
+#talleres-espera {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 50px;
+}
+
+.taller-config-list {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.taller-config-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+}
+
+.taller-config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.taller-config-grid .full { grid-column: 1/-1; }
+
+.taller-config-grid label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: .45;
+    margin-bottom: 4px;
+    margin-top: 8px;
+}
+
+.taller-config-grid input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    padding: 9px 10px;
+    font-size: 13px;
+    background: #fff;
+    color: #111;
+    outline: none;
+}
+
+.taller-config-grid input:focus { border-color: #111; }
+
+.taller-config-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.taller-config-checkbox input { width: auto; }
+
+.taller-config-checkbox label {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: .6;
+}
+
 </style>
 </head>
 <body>
@@ -444,6 +565,7 @@ input[type=file] { display:none; }
         <button class="tab" onclick="showTab('scans', this)">Subir Scans</button>
         <button class="tab" onclick="showTab('impresiones', this)">Impresiones</button>
         <button class="tab" onclick="showTab('precios', this)">Precios</button>
+        <button class="tab" onclick="showTab('talleres', this)">Talleres</button>
     </div>
 
     <!-- PANEL ÓRDENES -->
@@ -475,6 +597,17 @@ input[type=file] { display:none; }
 
             <div>
                 <div class="section-title">Órdenes activas</div>
+
+                <div class="bulk-toolbar">
+                    <label>
+                        <input type="checkbox" id="select-all" onchange="toggleSeleccionarTodas(this.checked)">
+                        Seleccionar todas
+                    </label>
+                    <span class="bulk-count" id="bulk-count">0 seleccionadas</span>
+                    <select id="bulk-status"></select>
+                    <button id="bulk-apply" disabled onclick="aplicarLote()">Aplicar a seleccionadas</button>
+                </div>
+
                 <div id="orders"></div>
             </div>
 
@@ -552,6 +685,25 @@ input[type=file] { display:none; }
 
     </div>
 
+    <!-- PANEL TALLERES -->
+    <div id="panel-talleres" class="panel">
+
+        <div class="section-title">Inscripciones a talleres</div>
+        <div id="talleres-inscripciones"></div>
+
+        <div class="section-title">Lista de espera</div>
+        <div id="talleres-espera"></div>
+
+        <div class="section-title">Configurar talleres (precio, lugar, ciudad, fecha, cupo)</div>
+        <div class="taller-config-list" id="taller-config-list"></div>
+        <div style="display:flex;gap:10px">
+            <button class="btn-update" style="width:auto;padding:10px 18px" onclick="agregarTallerConfig()">+ Agregar taller</button>
+            <button class="btn-update" style="width:auto;padding:10px 18px;background:#111;color:#fff" onclick="guardarTalleres()">Guardar talleres</button>
+        </div>
+        <div id="talleres-config-result" style="margin-top:12px;font-size:12px;letter-spacing:2px;text-transform:uppercase"></div>
+
+    </div>
+
 </div>
 
 <script>
@@ -564,11 +716,28 @@ function showTab(name, el) {
     if (el) el.classList.add("active")
     if (name === "precios")     loadPrecios()
     if (name === "impresiones") loadImpresiones()
+    if (name === "talleres")    loadTalleresPanel()
 }
 
 /* ÓRDENES */
 const statuses = ["RECEIVED","QUEUE","DEVELOPING","DRYING","SCANNING","EDITING","READY","DELIVERED"];
 const paymentStatuses = ["UNPAID","PAID"];
+const DIAS_ENTREGA_DEFAULT = 7;
+const DIAS_ESTANCADO = 5;
+
+function fechaEntregaDefault() {
+    const d = new Date();
+    d.setDate(d.getDate() + DIAS_ENTREGA_DEFAULT);
+    return d;
+}
+
+function diasSinCambios(order) {
+    return Math.floor((Date.now() - new Date(order.updated_at)) / 86400000);
+}
+
+function estaEstancada(order) {
+    return !["READY", "DELIVERED"].includes(order.status) && diasSinCambios(order) >= DIAS_ESTANCADO;
+}
 
 async function createOrder() {
     const body = {
@@ -597,15 +766,17 @@ async function createOrder() {
         </div>`;
 
     ["twin","name","email","phone","roll"].forEach(id => document.getElementById(id).value = "");
-    document.getElementById("delivery").valueAsDate = new Date();
+    document.getElementById("delivery").valueAsDate = fechaEntregaDefault();
     loadOrders();
 }
 
 async function loadOrders() {
     const res  = await fetch("/api/orders");
     const data = await res.json();
-    const active = data.filter(o => o.status !== "DELIVERED" && o.tipo !== "impresion").reverse();
+    const active = data.filter(o => !o.tipo && o.status !== "DELIVERED").reverse();
     const container = document.getElementById("orders");
+
+    actualizarContadorSeleccion();
 
     if (active.length === 0) {
         container.innerHTML = `<div class="empty">Sin órdenes activas</div>`;
@@ -613,11 +784,13 @@ async function loadOrders() {
     }
 
     container.innerHTML = active.map(order => `
-        <div class="order-card">
+        <div class="order-card${estaEstancada(order) ? " stale" : ""}">
             <div class="order-header">
+                <input type="checkbox" class="order-select" data-code="${order.public_code}" onchange="actualizarContadorSeleccion()">
                 <div class="order-code">${order.public_code}</div>
                 <div class="status-badge status-${order.status}">${order.status}</div>
             </div>
+            ${estaEstancada(order) ? `<div class="stale-badge">⚠ Sin cambios hace ${diasSinCambios(order)} días</div>` : ""}
             <div class="order-meta">
                 <div class="meta-row"><span class="meta-label">Twin</span><span class="meta-value">${order.twin_check || "—"}</span></div>
                 <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${order.client.name}</span></div>
@@ -661,6 +834,39 @@ async function updatePayment(code) {
 async function deleteOrder(code) {
     if (!confirm(`¿Eliminar la orden ${code}? Esta acción no se puede deshacer.`)) return;
     await fetch(`/api/orders/${code}`, { method:"DELETE" });
+    loadOrders();
+}
+
+/* ACTUALIZACIÓN EN LOTE */
+
+function toggleSeleccionarTodas(checked) {
+    document.querySelectorAll(".order-select").forEach(cb => cb.checked = checked);
+    actualizarContadorSeleccion();
+}
+
+function codigosSeleccionados() {
+    return [...document.querySelectorAll(".order-select:checked")].map(cb => cb.dataset.code);
+}
+
+function actualizarContadorSeleccion() {
+    const n = document.querySelectorAll(".order-select:checked").length;
+    document.getElementById("bulk-count").textContent = `${n} seleccionadas`;
+    document.getElementById("bulk-apply").disabled = n === 0;
+}
+
+async function aplicarLote() {
+    const codes  = codigosSeleccionados();
+    const status = document.getElementById("bulk-status").value;
+    if (codes.length === 0) return;
+    if (!confirm(`¿Pasar ${codes.length} orden(es) a "${status}"?`)) return;
+
+    await fetch("/api/orders/bulk/status", {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ codes, status })
+    });
+
+    document.getElementById("select-all").checked = false;
     loadOrders();
 }
 
@@ -846,6 +1052,7 @@ async function loadImpresiones() {
                     </select>
                     <button class="btn-update" onclick="updateImpStatus('${p.id}')">Estado</button>
                 </div>
+                ${p.payment_status !== "PAID" ? `<button class="btn-update" onclick="verificarPagoImp('${p.id}')">Verificar pago con MP</button>` : ""}
                 <button class="btn-delete" onclick="deleteImp('${p.id}')">Eliminar pedido</button>
             </div>
 
@@ -870,6 +1077,14 @@ async function deleteImp(id) {
     loadImpresiones()
 }
 
+async function verificarPagoImp(id) {
+    const res  = await fetch(`/api/imprimir/${id}/verificar-pago`, { method: "POST" })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || "Error al verificar el pago"); return }
+    alert(`Pago ${data.payment_status === "PAID" ? "confirmado" : "consultado"}: ${data.payment_status}`)
+    loadImpresiones()
+}
+
 /* PRECIOS */
 const SIZES = {
     "10x15": "10 × 15 cm",
@@ -886,19 +1101,23 @@ async function loadPrecios() {
         const data = await res.json()
 
         fields.innerHTML = Object.entries(SIZES).map(([key, label]) => `
-            <div style="margin-bottom:10px">
+            <div style="margin-bottom:14px">
                 <div class="section-title" style="margin-bottom:6px">${label}</div>
                 <div style="display:flex;align-items:center;gap:10px">
                     <input
                         id="precio-${key}"
                         type="number"
                         min="1"
-                        value="${data[key] || ""}"
+                        value="${data[key]?.precio || ""}"
                         style="flex:1;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none"
                         onfocus="this.style.borderColor='#111'"
                         onblur="this.style.borderColor='#e0e0e0'"
                     >
                     <span style="font-size:12px;opacity:.4;white-space:nowrap">UYU</span>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.6;white-space:nowrap">
+                        <input type="checkbox" id="activo-${key}" style="width:auto" ${data[key]?.activo !== false ? "checked" : ""}>
+                        Disponible
+                    </label>
                 </div>
             </div>
         `).join("")
@@ -915,7 +1134,8 @@ async function guardarPrecios() {
             alert(`Precio inválido para ${SIZES[key]}`)
             return
         }
-        precios[key] = val
+        const activo = document.getElementById(`activo-${key}`).checked
+        precios[key] = { precio: val, activo }
     }
 
     const res = await fetch("/api/precios", {
@@ -935,8 +1155,250 @@ async function guardarPrecios() {
     }
 }
 
+/* TALLERES */
+
+const tallerOrderStatuses = ["PENDIENTE_PAGO", "CONFIRMADO", "COMPLETADO", "CANCELADO"]
+let tallerConfigCache = []
+
+async function loadTalleresPanel() {
+    await loadTallerInscripciones()
+    await loadTallerEspera()
+    await loadTallerConfig()
+}
+
+async function loadTallerInscripciones() {
+    const res = await fetch("/api/orders")
+    const all = await res.json()
+    const inscripciones = all.filter(o => o.tipo === "taller").reverse()
+    const container = document.getElementById("talleres-inscripciones")
+
+    if (inscripciones.length === 0) {
+        container.innerHTML = `<div class="empty">Sin inscripciones a talleres</div>`
+        return
+    }
+
+    container.innerHTML = inscripciones.map(o => `
+        <div class="imp-card">
+            <div class="order-header">
+                <div class="order-code" style="font-size:14px">${o.id}</div>
+                <div class="status-badge status-${o.status === "CONFIRMADO" || o.status === "COMPLETADO" ? "READY" : o.status === "CANCELADO" ? "DELIVERED" : "RECEIVED"}">
+                    ${o.status}
+                </div>
+            </div>
+            <div class="order-meta">
+                <div class="meta-row"><span class="meta-label">Taller</span><span class="meta-value">${o.taller_snapshot?.nombre || o.taller_id}</span></div>
+                <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${o.client.nombre}</span></div>
+                <div class="meta-row"><span class="meta-label">Email</span><span class="meta-value" style="font-size:11px">${o.client.email}</span></div>
+                <div class="meta-row"><span class="meta-label">Teléfono</span><span class="meta-value">${o.client.telefono || "—"}</span></div>
+                <div class="meta-row"><span class="meta-label">Pago</span><span class="meta-value payment-${o.payment_status}">${o.payment_status}</span></div>
+                <div class="meta-row"><span class="meta-label">Total</span><span class="meta-value">$${o.total} UYU</span></div>
+                ${o.inscripcion?.nivel ? `<div class="meta-row"><span class="meta-label">Nivel</span><span class="meta-value">${o.inscripcion.nivel}</span></div>` : ""}
+                ${o.inscripcion?.camara ? `<div class="meta-row"><span class="meta-label">Cámara</span><span class="meta-value" style="font-size:11px">${o.inscripcion.camara}</span></div>` : ""}
+            </div>
+            <div class="order-controls">
+                <div class="control-row">
+                    <select id="taller-order-${o.id}">
+                        ${tallerOrderStatuses.map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updateTallerOrderStatus('${o.id}')">Estado</button>
+                </div>
+                ${o.payment_status !== "PAID" ? `<button class="btn-update" onclick="verificarPagoTaller('${o.id}')">Verificar pago con MP</button>` : ""}
+                <button class="btn-delete" onclick="deleteTallerOrder('${o.id}')">Eliminar inscripción</button>
+            </div>
+        </div>
+    `).join("")
+}
+
+async function updateTallerOrderStatus(id) {
+    const status = document.getElementById(`taller-order-${id}`).value
+    await fetch(`/api/talleres/${id}/status`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ status })
+    })
+    loadTallerInscripciones()
+}
+
+async function deleteTallerOrder(id) {
+    if (!confirm(`¿Eliminar la inscripción ${id}? Esta acción no se puede deshacer.`)) return
+    await fetch(`/api/talleres/${id}`, { method: "DELETE" })
+    loadTallerInscripciones()
+}
+
+async function verificarPagoTaller(id) {
+    const res  = await fetch(`/api/talleres/${id}/verificar-pago`, { method: "POST" })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || "Error al verificar el pago"); return }
+    alert(`Pago ${data.payment_status === "PAID" ? "confirmado" : "consultado"}: ${data.payment_status}`)
+    loadTallerInscripciones()
+}
+
+async function loadTallerEspera() {
+    const res = await fetch("/api/orders")
+    const all = await res.json()
+    const espera = all.filter(o => o.tipo === "taller_espera").reverse()
+    const container = document.getElementById("talleres-espera")
+
+    if (espera.length === 0) {
+        container.innerHTML = `<div class="empty">Sin anotados en lista de espera</div>`
+        return
+    }
+
+    container.innerHTML = espera.map(o => {
+        const tel = (o.client.telefono || "").replace(/\D/g, "")
+        const msg = encodeURIComponent(`Hola ${o.client.nombre}! Te escribo de La Tienda de Rollos porque se liberó un cupo en el taller "${o.taller_snapshot?.nombre || ""}".`)
+        return `
+        <div class="imp-card">
+            <div class="order-header">
+                <div class="order-code" style="font-size:14px">${o.id}</div>
+                <div class="status-badge status-RECEIVED">EN ESPERA</div>
+            </div>
+            <div class="order-meta">
+                <div class="meta-row"><span class="meta-label">Taller</span><span class="meta-value">${o.taller_snapshot?.nombre || o.taller_id}</span></div>
+                <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${o.client.nombre}</span></div>
+                <div class="meta-row"><span class="meta-label">Email</span><span class="meta-value" style="font-size:11px">${o.client.email}</span></div>
+                <div class="meta-row"><span class="meta-label">Teléfono</span><span class="meta-value">${o.client.telefono || "—"}</span></div>
+            </div>
+            <div class="order-controls">
+                ${tel ? `<a class="btn-update" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${msg}">Contactar por WhatsApp</a>` : ""}
+                <button class="btn-delete" onclick="deleteTallerEspera('${o.id}')">Quitar de la lista</button>
+            </div>
+        </div>`
+    }).join("")
+}
+
+async function deleteTallerEspera(id) {
+    if (!confirm(`¿Quitar ${id} de la lista de espera?`)) return
+    await fetch(`/api/talleres/espera/${id}`, { method: "DELETE" })
+    loadTallerEspera()
+}
+
+async function loadTallerConfig() {
+    try {
+        const res = await fetch("/api/talleres")
+        tallerConfigCache = await res.json()
+    } catch {
+        tallerConfigCache = []
+    }
+    renderTallerConfig()
+}
+
+function renderTallerConfig() {
+    const list = document.getElementById("taller-config-list")
+
+    if (tallerConfigCache.length === 0) {
+        list.innerHTML = `<div class="empty">Sin talleres configurados. Agregá uno.</div>`
+        return
+    }
+
+    list.innerHTML = tallerConfigCache.map((t, i) => `
+        <div class="taller-config-card">
+            <div class="taller-config-grid">
+                <div class="full">
+                    <label>ID (único)</label>
+                    <input value="${t.id || ""}" oninput="tallerConfigCache[${i}].id=this.value">
+                </div>
+                <div class="full">
+                    <label>Nombre</label>
+                    <input value="${t.nombre || ""}" oninput="tallerConfigCache[${i}].nombre=this.value">
+                </div>
+                <div>
+                    <label>Fecha</label>
+                    <input value="${t.fecha || ""}" oninput="tallerConfigCache[${i}].fecha=this.value">
+                </div>
+                <div>
+                    <label>Horario</label>
+                    <input value="${t.horario || ""}" oninput="tallerConfigCache[${i}].horario=this.value">
+                </div>
+                <div>
+                    <label>Lugar</label>
+                    <input value="${t.lugar || ""}" oninput="tallerConfigCache[${i}].lugar=this.value">
+                </div>
+                <div>
+                    <label>Ciudad</label>
+                    <input value="${t.ciudad || ""}" oninput="tallerConfigCache[${i}].ciudad=this.value">
+                </div>
+                <div>
+                    <label>Cupo</label>
+                    <input type="number" min="1" value="${t.cupo || 1}" oninput="tallerConfigCache[${i}].cupo=parseInt(this.value)||1">
+                </div>
+                <div>
+                    <label>Precio (UYU)</label>
+                    <input type="number" min="1" value="${t.precio || ""}" oninput="tallerConfigCache[${i}].precio=parseFloat(this.value)||0">
+                </div>
+                <div>
+                    <label>Duración</label>
+                    <input value="${t.duracion || ""}" oninput="tallerConfigCache[${i}].duracion=this.value">
+                </div>
+                <div class="full">
+                    <label>Incluye</label>
+                    <input value="${t.incluye || ""}" oninput="tallerConfigCache[${i}].incluye=this.value">
+                </div>
+            </div>
+            <div class="taller-config-checkbox">
+                <input type="checkbox" id="taller-activo-${i}" ${t.activo !== false ? "checked" : ""}
+                    onchange="tallerConfigCache[${i}].activo=this.checked">
+                <label for="taller-activo-${i}">Visible / activo en la web</label>
+            </div>
+            <button class="btn-delete" style="margin-top:14px" onclick="eliminarTallerConfig(${i})">Quitar taller</button>
+        </div>
+    `).join("")
+}
+
+function agregarTallerConfig() {
+    tallerConfigCache.push({
+        id: "", nombre: "", fecha: "", horario: "", lugar: "", ciudad: "",
+        cupo: 4, precio: 0, duracion: "", incluye: "", activo: true
+    })
+    renderTallerConfig()
+}
+
+function eliminarTallerConfig(i) {
+    tallerConfigCache.splice(i, 1)
+    renderTallerConfig()
+}
+
+async function guardarTalleres() {
+    const result = document.getElementById("talleres-config-result")
+
+    for (const t of tallerConfigCache) {
+        if (!t.id || !t.nombre) {
+            result.textContent = "Cada taller necesita ID y nombre"
+            result.style.color = "#c0392b"
+            return
+        }
+        if (!t.precio || t.precio <= 0) {
+            result.textContent = `Precio inválido para "${t.nombre}"`
+            result.style.color = "#c0392b"
+            return
+        }
+        if (!t.cupo || t.cupo <= 0) {
+            result.textContent = `Cupo inválido para "${t.nombre}"`
+            result.style.color = "#c0392b"
+            return
+        }
+    }
+
+    const res = await fetch("/api/talleres", {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(tallerConfigCache)
+    })
+
+    if (res.ok) {
+        result.textContent = "✓ Talleres guardados"
+        result.style.color = "#2a8a3e"
+        setTimeout(() => result.textContent = "", 3000)
+    } else {
+        const err = await res.json()
+        result.textContent = "Error: " + (err.error || "no se pudo guardar")
+        result.style.color = "#c0392b"
+    }
+}
+
 /* INIT */
-document.getElementById("delivery").valueAsDate = new Date();
+document.getElementById("delivery").valueAsDate = fechaEntregaDefault();
+document.getElementById("bulk-status").innerHTML = statuses.map(s => `<option value="${s}">${s}</option>`).join("");
 loadOrders();
 
 </script>
