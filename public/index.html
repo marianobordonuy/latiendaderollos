@@ -680,6 +680,9 @@
         <div class="print-precios" id="tabla-precios">
             <div class="print-precio-item"><div class="print-precio-size">Cargando...</div></div>
         </div>
+        <p style="font-size:12px;opacity:.5;margin-top:4px">
+            Descuentos por cantidad a partir de 21 y de 51 copias del mismo tamaño.
+        </p>
 
         <a href="/imprimir.html" class="btn btn-primary" style="width:fit-content">
             Pedir copias →
@@ -716,22 +719,10 @@
             </a>
         </div>
 
-        <div class="taller-meta">
+        <div class="taller-meta" id="taller-meta-home">
             <div class="taller-meta-row">
-                <span class="taller-meta-label">Duración</span>
-                <span class="taller-meta-val">5 clases</span>
-            </div>
-            <div class="taller-meta-row">
-                <span class="taller-meta-label">Cupo</span>
-                <span class="taller-meta-val">6 personas</span>
-            </div>
-            <div class="taller-meta-row">
-                <span class="taller-meta-label">Incluye</span>
-                <span class="taller-meta-val">Rollos + químicos + papel</span>
-            </div>
-            <div class="taller-meta-row">
-                <span class="taller-meta-label">Inversión</span>
-                <span class="taller-meta-val">$9.240 UYU</span>
+                <span class="taller-meta-label">Próximo taller</span>
+                <span class="taller-meta-val">Cargando...</span>
             </div>
         </div>
 
@@ -803,10 +794,10 @@ async function cargarPrecios() {
         const data = await res.json()
         const activos = Object.keys(data).filter(s => data[s].activo)
         const cont = document.getElementById("tabla-precios")
-        cont.innerHTML = activos.map(size => `
-            <div class="print-precio-item">
+        cont.innerHTML = activos.map((size, i) => `
+            <div class="print-precio-item" ${i === activos.length - 1 && activos.length % 2 === 1 ? 'style="grid-column:1/-1"' : ""}>
                 <div class="print-precio-size">${size.replace("x", " × ")}</div>
-                <div class="print-precio-val">$${data[size].precio} <span class="print-precio-unit">UYU</span></div>
+                <div class="print-precio-val">desde $${data[size].precio_1_20} <span class="print-precio-unit">UYU</span></div>
             </div>
         `).join("")
     } catch {}
@@ -878,7 +869,56 @@ function translateStatus(status) {
     return map[status] || status
 }
 
+/* Próximo taller (dinámico) */
+async function cargarProximoTaller() {
+    const cont = document.getElementById("taller-meta-home")
+    try {
+        const res = await fetch("/api/talleres")
+        if (!res.ok) throw new Error("Status " + res.status)
+        const talleres = (await res.json()).filter(t => t.activo !== false)
+
+        if (talleres.length === 0) {
+            cont.innerHTML = `<div class="taller-meta-row"><span class="taller-meta-val">Próximamente nuevas fechas</span></div>`
+            return
+        }
+
+        talleres.sort((a, b) => {
+            if (!a.fecha_inicio) return 1
+            if (!b.fecha_inicio) return -1
+            return new Date(a.fecha_inicio) - new Date(b.fecha_inicio)
+        })
+        const t = talleres[0]
+        const cupos = t.cupos_disponibles ?? t.cupo
+
+        cont.innerHTML = `
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Próxima fecha</span>
+                <span class="taller-meta-val">${t.fecha || "a confirmar"}</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Duración</span>
+                <span class="taller-meta-val">${t.duracion || "—"}</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Cupos disponibles</span>
+                <span class="taller-meta-val">${cupos}</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Incluye</span>
+                <span class="taller-meta-val">${t.incluye || "—"}</span>
+            </div>
+            <div class="taller-meta-row">
+                <span class="taller-meta-label">Inversión</span>
+                <span class="taller-meta-val">$${t.precio} UYU</span>
+            </div>
+        `
+    } catch {
+        cont.innerHTML = `<div class="taller-meta-row"><span class="taller-meta-val">Consultá disponibilidad en el taller →</span></div>`
+    }
+}
+
 cargarPrecios()
+cargarProximoTaller()
 
 </script>
 

@@ -41,6 +41,9 @@ router.put("/", auth, (req, res) => {
         if (typeof t.cupo !== "number" || t.cupo <= 0) {
             return res.status(400).json({ error: `Cupo inválido para ${t.id}` })
         }
+        if (t.fecha_inicio && isNaN(Date.parse(t.fecha_inicio))) {
+            return res.status(400).json({ error: `Fecha de inicio inválida para ${t.id}` })
+        }
     }
     saveTalleres(talleres)
     res.json(talleres)

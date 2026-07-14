@@ -456,6 +456,9 @@ footer { border-top: 1px solid #e0e0e0; }
     <div class="precios-hero" id="tabla-precios">
         <div class="precio-item"><div class="precio-size">Cargando...</div></div>
     </div>
+    <p style="font-size:12px;opacity:.5;margin-top:8px">
+        Descuentos por cantidad: precios especiales a partir de 21 y de 51 copias del mismo tamaño.
+    </p>
 
 </div>
 
@@ -578,6 +581,14 @@ function tamaniosActivos() {
     return Object.keys(PRECIOS).filter(s => PRECIOS[s].activo)
 }
 
+// Precio por unidad según la cantidad total pedida de ese tamaño (mismo
+// criterio que el server: todo el tramo paga el precio de ese tramo).
+function precioUnitario(info, qty) {
+    if (qty > 50) return info.precio_51_mas
+    if (qty > 20) return info.precio_21_50
+    return info.precio_1_20
+}
+
 /* Cargar precios */
 async function cargarPrecios() {
     try {
@@ -587,10 +598,10 @@ async function cargarPrecios() {
 
         const activos = tamaniosActivos()
         const cont = document.getElementById("tabla-precios")
-        cont.innerHTML = activos.map(size => `
-            <div class="precio-item">
+        cont.innerHTML = activos.map((size, i) => `
+            <div class="precio-item" ${i === activos.length - 1 && activos.length % 2 === 1 ? 'style="grid-column:1/-1"' : ""}>
                 <div class="precio-size">${size.replace("x", " × ")}</div>
-                <div class="precio-val">$${PRECIOS[size].precio} <span class="precio-unit">UYU</span></div>
+                <div class="precio-val">desde $${PRECIOS[size].precio_1_20} <span class="precio-unit">UYU</span></div>
             </div>
         `).join("")
     } catch {}
@@ -667,7 +678,7 @@ function renderFotos() {
                 <div class="foto-selects">
                     <select onchange="cambiarSize(${i}, this.value)">
                         ${activos.map(s => `
-                            <option value="${s}" ${f.size === s ? "selected" : ""}>${s} — $${PRECIOS[s].precio}</option>
+                            <option value="${s}" ${f.size === s ? "selected" : ""}>${s} — desde $${PRECIOS[s].precio_1_20}</option>
                         `).join("")}
                     </select>
                     <input type="number" min="1" max="99" value="${f.qty}"
@@ -700,7 +711,7 @@ function renderResumen() {
     let html  = ""
 
     for (const [size, qty] of Object.entries(grupos)) {
-        const sub = (PRECIOS[size]?.precio || 0) * qty
+        const sub = PRECIOS[size] ? precioUnitario(PRECIOS[size], qty) * qty : 0
         total    += sub
         html     += `
             <div class="resumen-row">

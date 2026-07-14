@@ -3,7 +3,7 @@ import multer from "multer"
 import rateLimit from "express-rate-limit"
 import { MercadoPagoConfig, Preference, Payment } from "mercadopago"
 import fs from "fs"
-import { loadOrders, saveOrders, loadPrecios } from "../lib/storage.js"
+import { loadOrders, saveOrders, loadPrecios, precioUnitario } from "../lib/storage.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { sendImpresionConfirmada, sendImpresionLista } from "../lib/email.js"
 import { auth } from "../lib/auth.js"
@@ -124,7 +124,18 @@ router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) =>
                 return res.status(400).json({ error: `Tamaño no disponible: ${item.size}` })
             }
         }
-        const total    = items.reduce((sum, item) => sum + PRECIOS[item.size].precio * item.qty, 0)
+
+        // El precio por unidad depende de la cantidad TOTAL pedida de ese
+        // tamaño (no por foto individual) — todo el tramo paga el mismo precio.
+        const qtyPorTamanio = {}
+        for (const item of items) {
+            qtyPorTamanio[item.size] = (qtyPorTamanio[item.size] || 0) + item.qty
+        }
+        const unitPriceBySize = {}
+        for (const [size, qty] of Object.entries(qtyPorTamanio)) {
+            unitPriceBySize[size] = precioUnitario(PRECIOS[size], qty)
+        }
+        const total    = Object.entries(qtyPorTamanio).reduce((sum, [size, qty]) => sum + unitPriceBySize[size] * qty, 0)
         const pedidoId = `IMP-${Date.now()}`
 
         // Subir fotos a R2 bucket film-prints organizadas por pedido
@@ -164,7 +175,7 @@ router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) =>
             id:          item.size,
             title:       `Copia ${item.size} cm`,
             quantity:    item.qty,
-            unit_price:  PRECIOS[item.size].precio,
+            unit_price:  unitPriceBySize[item.size],
             currency_id: "UYU"
         }))
 

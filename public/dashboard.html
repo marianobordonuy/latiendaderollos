@@ -1093,6 +1093,12 @@ const SIZES = {
     "20x30": "20 × 30 cm"
 }
 
+const TIERS = [
+    { key: "precio_1_20",   label: "1 a 20" },
+    { key: "precio_21_50",  label: "21 a 50" },
+    { key: "precio_51_mas", label: "51 o más" }
+]
+
 async function loadPrecios() {
     const fields = document.getElementById("precios-fields")
     try {
@@ -1101,19 +1107,23 @@ async function loadPrecios() {
         const data = await res.json()
 
         fields.innerHTML = Object.entries(SIZES).map(([key, label]) => `
-            <div style="margin-bottom:14px">
+            <div style="margin-bottom:20px">
                 <div class="section-title" style="margin-bottom:6px">${label}</div>
-                <div style="display:flex;align-items:center;gap:10px">
-                    <input
-                        id="precio-${key}"
-                        type="number"
-                        min="1"
-                        value="${data[key]?.precio || ""}"
-                        style="flex:1;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none"
-                        onfocus="this.style.borderColor='#111'"
-                        onblur="this.style.borderColor='#e0e0e0'"
-                    >
-                    <span style="font-size:12px;opacity:.4;white-space:nowrap">UYU</span>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                    ${TIERS.map(tier => `
+                        <div style="display:flex;flex-direction:column;gap:4px">
+                            <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.5">${tier.label}</span>
+                            <input
+                                id="${tier.key}-${key}"
+                                type="number"
+                                min="1"
+                                value="${data[key]?.[tier.key] || ""}"
+                                style="width:90px;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none"
+                                onfocus="this.style.borderColor='#111'"
+                                onblur="this.style.borderColor='#e0e0e0'"
+                            >
+                        </div>
+                    `).join("")}
                     <label style="display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.6;white-space:nowrap">
                         <input type="checkbox" id="activo-${key}" style="width:auto" ${data[key]?.activo !== false ? "checked" : ""}>
                         Disponible
@@ -1129,13 +1139,16 @@ async function loadPrecios() {
 async function guardarPrecios() {
     const precios = {}
     for (const key of Object.keys(SIZES)) {
-        const val = parseFloat(document.getElementById(`precio-${key}`).value)
-        if (!val || val <= 0) {
-            alert(`Precio inválido para ${SIZES[key]}`)
-            return
+        const info = { activo: document.getElementById(`activo-${key}`).checked }
+        for (const tier of TIERS) {
+            const val = parseFloat(document.getElementById(`${tier.key}-${key}`).value)
+            if (!val || val <= 0) {
+                alert(`Precio inválido (${tier.label}) para ${SIZES[key]}`)
+                return
+            }
+            info[tier.key] = val
         }
-        const activo = document.getElementById(`activo-${key}`).checked
-        precios[key] = { precio: val, activo }
+        precios[key] = info
     }
 
     const res = await fetch("/api/precios", {
@@ -1303,8 +1316,12 @@ function renderTallerConfig() {
                     <input value="${t.nombre || ""}" oninput="tallerConfigCache[${i}].nombre=this.value">
                 </div>
                 <div>
-                    <label>Fecha</label>
+                    <label>Fecha (texto a mostrar)</label>
                     <input value="${t.fecha || ""}" oninput="tallerConfigCache[${i}].fecha=this.value">
+                </div>
+                <div>
+                    <label>Fecha de inicio (para ordenar)</label>
+                    <input type="date" value="${t.fecha_inicio || ""}" oninput="tallerConfigCache[${i}].fecha_inicio=this.value">
                 </div>
                 <div>
                     <label>Horario</label>
@@ -1347,7 +1364,7 @@ function renderTallerConfig() {
 
 function agregarTallerConfig() {
     tallerConfigCache.push({
-        id: "", nombre: "", fecha: "", horario: "", lugar: "", ciudad: "",
+        id: "", nombre: "", fecha: "", fecha_inicio: "", horario: "", lugar: "", ciudad: "",
         cupo: 4, precio: 0, duracion: "", incluye: "", activo: true
     })
     renderTallerConfig()

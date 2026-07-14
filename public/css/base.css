@@ -8,6 +8,19 @@
     box-sizing: border-box;
 }
 
+html {
+    /* Evita que Android/iOS agranden el texto automáticamente ("font
+       boosting") en bloques con letter-spacing — deformaba el logo y
+       otros textos en mayúsculas al ver la web en el celular. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+img, svg {
+    max-width: 100%;
+    height: auto;
+}
+
 :root {
     --black:  #111;
     --white:  #fff;
@@ -70,4 +83,29 @@ footer {
     letter-spacing: 2px;
     text-transform: uppercase;
     opacity: .4;
+}
+
+/* MOBILE (compartido — nav/footer usados en todas las páginas públicas) */
+@media (max-width: 640px) {
+    .container { width: 92%; }
+
+    nav {
+        flex-wrap: wrap;
+        gap: 10px 20px;
+        padding: 20px 0 16px;
+    }
+
+    .nav-brand {
+        font-size: 10px;
+        letter-spacing: 2px;
+        white-space: nowrap;
+    }
+
+    footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 40px 0;
+        text-align: left;
+    }
 }

@@ -19,9 +19,15 @@ router.put("/", auth, (req, res) => {
     if (entries.length === 0) {
         return res.status(400).json({ error: "No se recibieron precios" })
     }
+    const TIERS = ["precio_1_20", "precio_21_50", "precio_51_mas"]
     for (const [size, info] of entries) {
-        if (!info || typeof info !== "object" || typeof info.precio !== "number" || info.precio <= 0) {
+        if (!info || typeof info !== "object") {
             return res.status(400).json({ error: `Precio inválido para ${size}` })
+        }
+        for (const tier of TIERS) {
+            if (typeof info[tier] !== "number" || info[tier] <= 0) {
+                return res.status(400).json({ error: `Precio inválido (${tier}) para ${size}` })
+            }
         }
         if (typeof info.activo !== "boolean") {
             return res.status(400).json({ error: `Falta el estado 'activo' para ${size}` })
