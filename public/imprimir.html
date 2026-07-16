@@ -764,7 +764,7 @@ async function pagar() {
 
     const btn = document.getElementById("btn-pagar")
     btn.disabled    = true
-    btn.textContent = "Subiendo fotos..."
+    btn.textContent = "Subiendo fotos... 0%"
 
     try {
         const telefono = document.getElementById("telefono").value.trim()
@@ -776,16 +776,29 @@ async function pagar() {
         for (const f of fotos) formData.append("fotos", f.file, f.file.name)
         formData.append("data", JSON.stringify({ nombre, email, telefono, envio, nota, items }))
 
-        btn.textContent = "Procesando..."
+        // XMLHttpRequest en vez de fetch: es lo que permite mostrar el
+        // progreso real de la subida (fetch no expone eso todavía).
+        const data = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest()
+            xhr.open("POST", "/api/imprimir/pedido")
 
-        const res = await fetch("/api/imprimir/pedido", { method: "POST", body: formData })
+            xhr.upload.onprogress = e => {
+                if (!e.lengthComputable) return
+                const pct = Math.round((e.loaded / e.total) * 100)
+                btn.textContent = pct < 100 ? `Subiendo fotos... ${pct}%` : "Creando el pago..."
+            }
 
-        if (!res.ok) {
-            const err = await res.json()
-            throw new Error(err.error || "Error del servidor")
-        }
+            xhr.onload = () => {
+                let body = null
+                try { body = JSON.parse(xhr.responseText) } catch {}
+                if (xhr.status >= 200 && xhr.status < 300) resolve(body)
+                else reject(new Error(body?.error || "Error del servidor"))
+            }
 
-        const data = await res.json()
+            xhr.onerror = () => reject(new Error("Error de red al subir las fotos"))
+            xhr.send(formData)
+        })
+
         window.location.href = data.init_point
 
     } catch (err) {
