@@ -8,7 +8,7 @@ import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { sendImpresionConfirmada, sendImpresionLista } from "../lib/email.js"
 import { auth } from "../lib/auth.js"
 import { sanitizeFilename } from "../lib/zip.js"
-import { verifyMpSignature } from "../lib/mp.js"
+import { verifyMpSignature, applyPaymentResult } from "../lib/mp.js"
 
 const router = Router()
 
@@ -20,10 +20,46 @@ const pedidoLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
 
 const IMPRESION_STATUSES = ["PENDIENTE_PAGO", "RECIBIDO", "EN_PROCESO", "LISTO", "ENTREGADO"]
 
+const MAX_FOTOS_POR_PEDIDO = 250
+
 const upload = multer({
     dest: "uploads/",
-    limits: { fileSize: 500 * 1024 * 1024, files: 50 }
+    limits: { fileSize: 500 * 1024 * 1024, files: MAX_FOTOS_POR_PEDIDO }
 })
+
+/* Envuelve multer para devolver un mensaje claro en vez del error genérico
+   del handler global cuando se supera la cantidad o el tamaño permitido. */
+function subirFotos(req, res, next) {
+    upload.array("fotos")(req, res, (err) => {
+        if (!err) return next()
+        if (err.code === "LIMIT_FILE_COUNT") {
+            return res.status(400).json({ error: `Como máximo se pueden subir ${MAX_FOTOS_POR_PEDIDO} fotos por pedido` })
+        }
+        if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({ error: "Una de las fotos supera el tamaño máximo permitido (500MB)" })
+        }
+        console.error("Error de upload:", err.message)
+        res.status(400).json({ error: "Error al subir las fotos" })
+    })
+}
+
+// Sube varias fotos en paralelo (no de a una, no las 250 a la vez) para que
+// un pedido grande no tarde varios minutos ni abra demasiadas conexiones a
+// R2 al mismo tiempo.
+const CONCURRENCIA_SUBIDA = 8
+
+async function conConcurrencia(items, concurrencia, fn) {
+    const resultados = new Array(items.length)
+    let index = 0
+    async function worker() {
+        while (index < items.length) {
+            const i = index++
+            resultados[i] = await fn(items[i], i)
+        }
+    }
+    await Promise.all(Array.from({ length: Math.min(concurrencia, items.length) }, worker))
+    return resultados
+}
 
 /* VER FOTO (protegido) */
 router.get("/foto/:key", auth, (req, res) => {
@@ -83,21 +119,12 @@ router.post("/:id/verificar-pago", auth, async (req, res) => {
         const pagoData = results.find(p => p.status === "approved") || results[0]
         if (!pagoData) return res.status(404).json({ error: "MP no tiene ningún pago registrado para este pedido" })
 
-        const estado = pagoData.status
-        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
-            console.error(`Verificación MP: monto no coincide para ${order.id} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
-            return res.status(409).json({ error: "El monto del pago en MP no coincide con el total del pedido" })
-        }
-
-        order.mp_payment_id  = pagoData.id
-        order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()
-        order.updated_at     = new Date()
-        if (estado === "approved" && order.status === "PENDIENTE_PAGO") order.status = "RECIBIDO"
-        saveOrders(orders)
-
-        if (estado === "approved" && order.client.email) {
-            try { await sendImpresionConfirmada(order) } catch (e) { console.error("Error enviando email:", e.message) }
-        }
+        const applied = await applyPaymentResult(orders, order, pagoData, {
+            estadoAprobado: "RECIBIDO",
+            onAprobado:     sendImpresionConfirmada,
+            logPrefix:      "Verificación MP"
+        })
+        if (!applied) return res.status(409).json({ error: "El monto del pago en MP no coincide con el total del pedido" })
 
         res.json(order)
     } catch (err) {
@@ -107,7 +134,7 @@ router.post("/:id/verificar-pago", auth, async (req, res) => {
 })
 
 /* CREAR PEDIDO */
-router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) => {
+router.post("/pedido", pedidoLimiter, subirFotos, async (req, res) => {
     try {
         const body = JSON.parse(req.body.data)
         const { nombre, email, telefono, envio, nota, items } = body
@@ -139,10 +166,9 @@ router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) =>
         const pedidoId = `IMP-${Date.now()}`
 
         // Subir fotos a R2 bucket film-prints organizadas por pedido
-        const fotoLinks = []
-        for (const file of req.files) {
+        const resultados = await conConcurrencia(req.files, CONCURRENCIA_SUBIDA, async (file) => {
             const ext = file.originalname.split(".").pop().toLowerCase()
-            if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) continue
+            if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) return null
             const key = `${pedidoId}/${sanitizeFilename(file.originalname)}`
             await uploadToR2({
                 bucket:      BUCKETS.prints,
@@ -150,8 +176,9 @@ router.post("/pedido", pedidoLimiter, upload.array("fotos"), async (req, res) =>
                 body:        fs.createReadStream(file.path),
                 contentType: file.mimetype
             })
-            fotoLinks.push({ key, name: file.originalname })
-        }
+            return { key, name: file.originalname }
+        })
+        const fotoLinks = resultados.filter(Boolean)
 
         // Guardar pedido
         const orders = loadOrders()
@@ -218,27 +245,16 @@ router.post("/webhook", async (req, res) => {
 
         const payment  = new Payment(mp)
         const pagoData = await payment.get({ id: data.id })
-        const pedidoId = pagoData.external_reference
-        const estado   = pagoData.status
 
         const orders = loadOrders()
-        const order  = orders.find(o => o.id === pedidoId && o.tipo === "impresion")
+        const order  = orders.find(o => o.id === pagoData.external_reference && o.tipo === "impresion")
         if (!order) return
 
-        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
-            console.error(`Webhook MP: monto no coincide para ${pedidoId} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
-            return
-        }
-
-        order.mp_payment_id  = data.id
-        order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()
-        order.updated_at     = new Date()
-        if (estado === "approved") order.status = "RECIBIDO"
-        saveOrders(orders)
-
-        if (estado === "approved" && order.client.email) {
-            await sendImpresionConfirmada(order)
-        }
+        await applyPaymentResult(orders, order, pagoData, {
+            estadoAprobado: "RECIBIDO",
+            onAprobado:     sendImpresionConfirmada,
+            logPrefix:      "Webhook MP"
+        })
 
     } catch (err) {
         console.error("Webhook error:", err.message)

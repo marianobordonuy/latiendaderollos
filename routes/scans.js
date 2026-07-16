@@ -22,8 +22,9 @@ fs.readdirSync(UPLOAD_DIR).forEach(file => {
 const uploadLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
 
 // Límites acordes a la memoria disponible del server (ver fly.toml): el zip
-// se arma entero en memoria, así que el total del lote no puede acercarse a la RAM del VM.
-const MAX_TOTAL_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024 // 1GB
+// se arma entero en memoria y en el pico usa ~3x el tamaño del lote, así que
+// el total no puede acercarse a la RAM del VM (1024mb).
+const MAX_TOTAL_UPLOAD_BYTES = 300 * 1024 * 1024 // 300MB
 
 const upload = multer({
     dest: UPLOAD_DIR + "/",

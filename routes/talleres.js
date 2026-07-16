@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit"
 import { MercadoPagoConfig, Preference, Payment } from "mercadopago"
 import { loadOrders, saveOrders, loadTalleres, saveTalleres } from "../lib/storage.js"
 import { auth } from "../lib/auth.js"
-import { verifyMpSignature } from "../lib/mp.js"
+import { verifyMpSignature, applyPaymentResult } from "../lib/mp.js"
 import { sendTallerConfirmado } from "../lib/email.js"
 
 const router = Router()
@@ -212,27 +212,16 @@ router.post("/webhook", async (req, res) => {
 
         const payment  = new Payment(mp)
         const pagoData = await payment.get({ id: data.id })
-        const pedidoId = pagoData.external_reference
-        const estado   = pagoData.status
 
         const orders = loadOrders()
-        const order  = orders.find(o => o.id === pedidoId && o.tipo === "taller")
+        const order  = orders.find(o => o.id === pagoData.external_reference && o.tipo === "taller")
         if (!order) return
 
-        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
-            console.error(`Webhook MP (talleres): monto no coincide para ${pedidoId} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
-            return
-        }
-
-        order.mp_payment_id  = data.id
-        order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()
-        order.updated_at     = new Date()
-        if (estado === "approved") order.status = "CONFIRMADO"
-        saveOrders(orders)
-
-        if (estado === "approved" && order.client.email) {
-            await sendTallerConfirmado(order)
-        }
+        await applyPaymentResult(orders, order, pagoData, {
+            estadoAprobado: "CONFIRMADO",
+            onAprobado:     sendTallerConfirmado,
+            logPrefix:      "Webhook MP (talleres)"
+        })
 
     } catch (err) {
         console.error("Webhook error (talleres):", err.message)
@@ -293,21 +282,12 @@ router.post("/:id/verificar-pago", auth, async (req, res) => {
         const pagoData = results.find(p => p.status === "approved") || results[0]
         if (!pagoData) return res.status(404).json({ error: "MP no tiene ningún pago registrado para esta inscripción" })
 
-        const estado = pagoData.status
-        if (estado === "approved" && pagoData.transaction_amount !== order.total) {
-            console.error(`Verificación MP (talleres): monto no coincide para ${order.id} (esperado ${order.total}, recibido ${pagoData.transaction_amount})`)
-            return res.status(409).json({ error: "El monto del pago en MP no coincide con el total de la inscripción" })
-        }
-
-        order.mp_payment_id  = pagoData.id
-        order.payment_status = estado === "approved" ? "PAID" : estado.toUpperCase()
-        order.updated_at     = new Date()
-        if (estado === "approved" && order.status === "PENDIENTE_PAGO") order.status = "CONFIRMADO"
-        saveOrders(orders)
-
-        if (estado === "approved" && order.client.email) {
-            try { await sendTallerConfirmado(order) } catch (e) { console.error("Error enviando email:", e.message) }
-        }
+        const applied = await applyPaymentResult(orders, order, pagoData, {
+            estadoAprobado: "CONFIRMADO",
+            onAprobado:     sendTallerConfirmado,
+            logPrefix:      "Verificación MP (talleres)"
+        })
+        if (!applied) return res.status(409).json({ error: "El monto del pago en MP no coincide con el total de la inscripción" })
 
         res.json(order)
     } catch (err) {

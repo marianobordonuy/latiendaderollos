@@ -457,7 +457,7 @@ footer { border-top: 1px solid #e0e0e0; }
         <div class="precio-item"><div class="precio-size">Cargando...</div></div>
     </div>
     <p style="font-size:12px;opacity:.5;margin-top:8px">
-        Descuentos por cantidad: precios especiales a partir de 21 y de 51 copias del mismo tamaño.
+        Descuentos por cantidad: precios especiales a partir de 21, 51 y 101 copias del mismo tamaño.
     </p>
 
 </div>
@@ -584,8 +584,9 @@ function tamaniosActivos() {
 // Precio por unidad según la cantidad total pedida de ese tamaño (mismo
 // criterio que el server: todo el tramo paga el precio de ese tramo).
 function precioUnitario(info, qty) {
-    if (qty > 50) return info.precio_51_mas
-    if (qty > 20) return info.precio_21_50
+    if (qty > 100) return info.precio_101_mas
+    if (qty > 50)  return info.precio_51_100
+    if (qty > 20)  return info.precio_21_50
     return info.precio_1_20
 }
 
@@ -634,13 +635,20 @@ fileInput.addEventListener("change", () => {
     fileInput.value = ""
 })
 
+const MAX_FOTOS_POR_PEDIDO = 250
+
 function agregarFotos(files) {
     const activos = tamaniosActivos()
     const defaultSize = activos[0]
+    let omitidas = 0
     for (const file of files) {
+        if (fotos.length >= MAX_FOTOS_POR_PEDIDO) { omitidas++; continue }
         const ext = file.name.split(".").pop().toLowerCase()
         if (!["jpg","jpeg","png","tif","tiff"].includes(ext)) continue
         fotos.push({ file, url: URL.createObjectURL(file), size: defaultSize, qty: 1 })
+    }
+    if (omitidas > 0) {
+        alert(`Como máximo se pueden subir ${MAX_FOTOS_POR_PEDIDO} fotos por pedido. No se agregaron ${omitidas}.`)
     }
     renderFotos()
 }

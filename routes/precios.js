@@ -19,7 +19,7 @@ router.put("/", auth, (req, res) => {
     if (entries.length === 0) {
         return res.status(400).json({ error: "No se recibieron precios" })
     }
-    const TIERS = ["precio_1_20", "precio_21_50", "precio_51_mas"]
+    const TIERS = ["precio_1_20", "precio_21_50", "precio_51_100", "precio_101_mas"]
     for (const [size, info] of entries) {
         if (!info || typeof info !== "object") {
             return res.status(400).json({ error: `Precio inválido para ${size}` })
