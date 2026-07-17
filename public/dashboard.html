@@ -566,6 +566,7 @@ input[type=file] { display:none; }
         <button class="tab" onclick="showTab('impresiones', this)">Impresiones</button>
         <button class="tab" onclick="showTab('precios', this)">Precios</button>
         <button class="tab" onclick="showTab('talleres', this)">Talleres</button>
+        <button class="tab" onclick="showTab('servicios', this)">Servicios</button>
     </div>
 
     <!-- PANEL ÓRDENES -->
@@ -704,6 +705,41 @@ input[type=file] { display:none; }
 
     </div>
 
+    <!-- PANEL SERVICIOS -->
+    <div id="panel-servicios" class="panel">
+
+        <div class="section-title">Generar link de pago</div>
+        <div style="max-width:420px;margin-bottom:20px">
+            <div style="margin-bottom:14px">
+                <div class="section-title" style="margin-bottom:6px">Nombre del cliente</div>
+                <input id="serv-nombre" type="text" style="width:100%;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none">
+            </div>
+            <div style="margin-bottom:14px">
+                <div class="section-title" style="margin-bottom:6px">Email del cliente</div>
+                <input id="serv-email" type="email" style="width:100%;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none">
+            </div>
+            <div style="margin-bottom:14px">
+                <div class="section-title" style="margin-bottom:6px">Teléfono (opcional, para WhatsApp)</div>
+                <input id="serv-telefono" type="text" placeholder="598..." style="width:100%;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none">
+            </div>
+            <div style="margin-bottom:14px">
+                <div class="section-title" style="margin-bottom:6px">Concepto</div>
+                <input id="serv-concepto" type="text" placeholder="Ej: Sesión de fotos evento" style="width:100%;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none">
+            </div>
+            <div style="margin-bottom:14px">
+                <div class="section-title" style="margin-bottom:6px">Monto (UYU)</div>
+                <input id="serv-monto" type="number" min="1" style="width:100%;border:1px solid #e0e0e0;padding:10px 12px;font-size:14px;outline:none">
+            </div>
+            <button class="btn-update" id="serv-btn-generar" style="width:auto;padding:10px 18px;background:#111;color:#fff" onclick="crearLinkServicio()">Generar link de pago</button>
+        </div>
+
+        <div id="serv-link-result" style="display:none;max-width:420px;margin-bottom:30px;padding:16px;border:1px solid #e0e0e0"></div>
+
+        <div class="section-title">Servicios generados</div>
+        <div id="servicios-list"></div>
+
+    </div>
+
 </div>
 
 <script>
@@ -717,6 +753,7 @@ function showTab(name, el) {
     if (name === "precios")     loadPrecios()
     if (name === "impresiones") loadImpresiones()
     if (name === "talleres")    loadTalleresPanel()
+    if (name === "servicios")   loadServicios()
     if (name === "scans") startScanPolling(); else stopScanPolling()
 }
 
@@ -1424,6 +1461,125 @@ async function guardarTalleres() {
         result.textContent = "Error: " + (err.error || "no se pudo guardar")
         result.style.color = "#c0392b"
     }
+}
+
+/* SERVICIOS */
+const servicioStatuses = ["PENDIENTE_PAGO", "PAGADO", "COMPLETADO", "CANCELADO"]
+
+async function crearLinkServicio() {
+    const nombre   = document.getElementById("serv-nombre").value.trim()
+    const email    = document.getElementById("serv-email").value.trim()
+    const telefono = document.getElementById("serv-telefono").value.trim()
+    const concepto = document.getElementById("serv-concepto").value.trim()
+    const monto    = parseFloat(document.getElementById("serv-monto").value)
+
+    if (!nombre || !email || !concepto || !monto || monto <= 0) {
+        alert("Completá nombre, email, concepto y un monto válido.")
+        return
+    }
+
+    const btn = document.getElementById("serv-btn-generar")
+    btn.disabled    = true
+    btn.textContent = "Generando..."
+
+    try {
+        const res  = await fetch("/api/servicios/crear-link", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ nombre, email, telefono, concepto, monto })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Error al generar el link")
+
+        const result = document.getElementById("serv-link-result")
+        const msgWa  = encodeURIComponent(`Hola ${nombre}! Te paso el link para abonar "${concepto}" ($${monto} UYU): ${data.init_point}`)
+        result.style.display = "block"
+        result.innerHTML = `
+            <div class="section-title" style="margin-bottom:8px">Link generado</div>
+            <input readonly value="${data.init_point}" onclick="this.select()" style="width:100%;border:1px solid #e0e0e0;padding:10px;font-size:12px;margin-bottom:10px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn-update" style="width:auto;padding:10px 18px" onclick="navigator.clipboard.writeText('${data.init_point}'); this.textContent='Copiado ✓'">Copiar link</button>
+                ${telefono ? `<a class="btn-update" style="width:auto;padding:10px 18px;text-decoration:none;text-align:center" href="https://wa.me/${telefono.replace(/\D/g,'')}?text=${msgWa}" target="_blank">Enviar por WhatsApp</a>` : ""}
+            </div>
+        `
+
+        document.getElementById("serv-nombre").value   = ""
+        document.getElementById("serv-email").value    = ""
+        document.getElementById("serv-telefono").value = ""
+        document.getElementById("serv-concepto").value = ""
+        document.getElementById("serv-monto").value    = ""
+
+        loadServicios()
+    } catch (err) {
+        alert("Error: " + err.message)
+    } finally {
+        btn.disabled    = false
+        btn.textContent = "Generar link de pago"
+    }
+}
+
+async function loadServicios() {
+    const res = await fetch("/api/orders")
+    const all = await res.json()
+    const servicios = all.filter(o => o.tipo === "servicio").reverse()
+    const container = document.getElementById("servicios-list")
+
+    if (servicios.length === 0) {
+        container.innerHTML = `<div class="empty">Sin servicios generados</div>`
+        return
+    }
+
+    container.innerHTML = servicios.map(s => `
+        <div class="imp-card">
+            <div class="order-header">
+                <div class="order-code" style="font-size:14px">${s.id}</div>
+                <div class="status-badge status-${s.status === "COMPLETADO" ? "READY" : s.status === "CANCELADO" ? "DELIVERED" : s.payment_status === "PAID" ? "DEVELOPING" : "RECEIVED"}">
+                    ${s.status}
+                </div>
+            </div>
+            <div class="order-meta">
+                <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${s.client.nombre}</span></div>
+                <div class="meta-row"><span class="meta-label">Email</span><span class="meta-value" style="font-size:11px">${s.client.email}</span></div>
+                <div class="meta-row"><span class="meta-label">Concepto</span><span class="meta-value">${s.concepto}</span></div>
+                <div class="meta-row"><span class="meta-label">Pago</span><span class="meta-value payment-${s.payment_status}">${s.payment_status}</span></div>
+                <div class="meta-row"><span class="meta-label">Monto</span><span class="meta-value">$${s.total} UYU</span></div>
+            </div>
+            <div class="order-controls">
+                <div class="control-row">
+                    <select id="serv-status-${s.id}">
+                        ${servicioStatuses.map(st => `<option value="${st}" ${s.status===st?"selected":""}>${st}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updateServicioStatus('${s.id}')">Estado</button>
+                </div>
+                ${s.payment_status !== "PAID" ? `<button class="btn-update" onclick="verificarPagoServicio('${s.id}')">Verificar pago con MP</button>` : ""}
+                <button class="btn-delete" onclick="deleteServicio('${s.id}')">Eliminar</button>
+            </div>
+        </div>
+    `).join("")
+}
+
+async function updateServicioStatus(id) {
+    const status = document.getElementById(`serv-status-${id}`).value
+    await fetch(`/api/servicios/${id}/status`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ status })
+    })
+    loadServicios()
+}
+
+async function deleteServicio(id) {
+    if (!confirm(`¿Eliminar este servicio? Esta acción no se puede deshacer.`)) return
+    await fetch(`/api/servicios/${id}`, { method: "DELETE" })
+    loadServicios()
+}
+
+async function verificarPagoServicio(id) {
+    const res  = await fetch(`/api/servicios/${id}/verificar-pago`, { method: "POST" })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || "Error al verificar el pago"); return }
+    alert(`Pago ${data.payment_status === "PAID" ? "confirmado" : "consultado"}: ${data.payment_status}`)
+    loadServicios()
 }
 
 /* INIT */

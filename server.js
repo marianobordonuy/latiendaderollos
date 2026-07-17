@@ -9,6 +9,7 @@ import scansRouter    from "./routes/scans.js"
 import imprimirRouter from "./routes/imprimir.js"
 import preciosRouter  from "./routes/precios.js"
 import talleresRouter from "./routes/talleres.js"
+import serviciosRouter from "./routes/servicios.js"
 import estacionRouter from "./routes/estacion.js"
 import { startBackupScheduler } from "./lib/backup.js"
 import { auth } from "./lib/auth.js"
@@ -70,6 +71,8 @@ app.use("/api/imprimir", imprimirRouter)
 app.use("/imprimir",     imprimirRouter)
 app.use("/api/talleres", talleresRouter)
 app.use("/taller",       talleresRouter)  // /taller/confirmacion (back_url de MP)
+app.use("/api/servicios", serviciosRouter)
+app.use("/servicio",      serviciosRouter)  // /servicio/confirmacion (back_url de MP)
 app.use("/api/estacion", estacionRouter)
 app.use("/",             scansRouter)  // /d/:id y /scan-status
 
