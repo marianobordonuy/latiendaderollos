@@ -22,24 +22,39 @@ const IMPRESION_STATUSES = ["PENDIENTE_PAGO", "RECIBIDO", "EN_PROCESO", "LISTO",
 
 const MAX_FOTOS_POR_PEDIDO = 250
 
+// El límite por archivo (500MB) y por cantidad (250) no evitan que la suma
+// del pedido entero sea enorme — cada foto se sube a R2 desde disco, así
+// que el riesgo real es llenar el disco de uploads/, no la RAM.
+const MAX_TOTAL_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024 // 2GB
+
 const upload = multer({
     dest: "uploads/",
     limits: { fileSize: 500 * 1024 * 1024, files: MAX_FOTOS_POR_PEDIDO }
 })
 
 /* Envuelve multer para devolver un mensaje claro en vez del error genérico
-   del handler global cuando se supera la cantidad o el tamaño permitido. */
+   del handler global cuando se supera la cantidad, el tamaño o el total
+   permitido. */
 function subirFotos(req, res, next) {
     upload.array("fotos")(req, res, (err) => {
-        if (!err) return next()
-        if (err.code === "LIMIT_FILE_COUNT") {
-            return res.status(400).json({ error: `Como máximo se pueden subir ${MAX_FOTOS_POR_PEDIDO} fotos por pedido` })
+        if (err) {
+            if (err.code === "LIMIT_FILE_COUNT") {
+                return res.status(400).json({ error: `Como máximo se pueden subir ${MAX_FOTOS_POR_PEDIDO} fotos por pedido` })
+            }
+            if (err.code === "LIMIT_FILE_SIZE") {
+                return res.status(400).json({ error: "Una de las fotos supera el tamaño máximo permitido (500MB)" })
+            }
+            console.error("Error de upload:", err.message)
+            return res.status(400).json({ error: "Error al subir las fotos" })
         }
-        if (err.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({ error: "Una de las fotos supera el tamaño máximo permitido (500MB)" })
+
+        const totalSize = (req.files || []).reduce((sum, f) => sum + f.size, 0)
+        if (totalSize > MAX_TOTAL_UPLOAD_BYTES) {
+            req.files.forEach(f => { try { fs.unlinkSync(f.path) } catch {} })
+            return res.status(400).json({ error: "El pedido supera el tamaño total permitido (2GB)" })
         }
-        console.error("Error de upload:", err.message)
-        res.status(400).json({ error: "Error al subir las fotos" })
+
+        next()
     })
 }
 
@@ -48,16 +63,28 @@ function subirFotos(req, res, next) {
 // R2 al mismo tiempo.
 const CONCURRENCIA_SUBIDA = 8
 
+// Si un worker deja que su error se propague, Promise.all corta apenas
+// rechaza el primero — pero los demás workers siguen corriendo en segundo
+// plano, leyendo archivos temporales que el caller puede borrar apenas
+// conConcurrencia "termina". Por eso cada worker atrapa su propio error y
+// sigue: la función no vuelve hasta que TODOS terminaron de verdad, y recién
+// ahí se relanza el primer error si hubo alguno.
 async function conConcurrencia(items, concurrencia, fn) {
     const resultados = new Array(items.length)
+    const errores = []
     let index = 0
     async function worker() {
         while (index < items.length) {
             const i = index++
-            resultados[i] = await fn(items[i], i)
+            try {
+                resultados[i] = await fn(items[i], i)
+            } catch (err) {
+                errores.push(err)
+            }
         }
     }
     await Promise.all(Array.from({ length: Math.min(concurrencia, items.length) }, worker))
+    if (errores.length > 0) throw errores[0]
     return resultados
 }
 

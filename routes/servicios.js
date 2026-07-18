@@ -13,6 +13,11 @@ const mp = new MercadoPagoConfig({
 
 const SERVICIO_STATUSES = ["PENDIENTE_PAGO", "PAGADO", "COMPLETADO", "CANCELADO"]
 
+// Techo de seguridad contra un error de tipeo del admin (ej. un cero de más)
+// que generaría un link de pago real por un monto muy superior al querido.
+// Ajustable — no es una regla de negocio, es una red de contención.
+const MONTO_MAXIMO = 500000
+
 /* ADMIN: CREAR LINK DE PAGO POR MONTO LIBRE (protegido) */
 router.post("/crear-link", auth, async (req, res) => {
     try {
@@ -20,10 +25,15 @@ router.post("/crear-link", auth, async (req, res) => {
         const email    = (req.body.email || "").trim()
         const telefono = (req.body.telefono || "").trim()
         const concepto = (req.body.concepto || "").trim()
-        const monto    = Number(req.body.monto)
+        // Redondeado a centésimos: evita que un monto con decimales largos
+        // nunca coincida con lo que MP reporta como transaction_amount.
+        const monto = Math.round(Number(req.body.monto) * 100) / 100
 
         if (!nombre || !email || !concepto || !Number.isFinite(monto) || monto <= 0) {
             return res.status(400).json({ error: "Faltan datos o el monto es inválido" })
+        }
+        if (monto > MONTO_MAXIMO) {
+            return res.status(400).json({ error: `El monto máximo por link es $${MONTO_MAXIMO} UYU` })
         }
 
         const pedidoId = `SERV-${Date.now()}`
