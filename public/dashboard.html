@@ -76,6 +76,28 @@ body {
 .tab.active { color:#111; border-bottom-color:#111; }
 .tab:hover:not(.active) { color:#555; }
 
+/* MOBILE */
+@media (max-width: 700px) {
+    .container { width: 94%; }
+
+    .header { flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 11px; }
+
+    /* La barra de tabs no entra con 6 pestañas en una pantalla chica —
+       en vez de amontonarlas, se desliza horizontal (patrón estándar de
+       tabs en mobile) en vez de desbordar toda la página. */
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+    }
+    .tab {
+        padding: 12px 14px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
 .panel { display:none; }
 .panel.active { display:block; }
 
