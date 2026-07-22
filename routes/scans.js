@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit"
 import fs from "fs"
 import path from "path"
 import crypto from "crypto"
-import { buildZipBuffer } from "../lib/zip.js"
+import { streamZip } from "../lib/zip.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { loadOrders, saveOrders } from "../lib/storage.js"
 import { sendScansReady } from "../lib/email.js"
@@ -20,12 +20,13 @@ fs.readdirSync(UPLOAD_DIR).forEach(file => {
     try { fs.unlinkSync(path.join(UPLOAD_DIR, file)) } catch {}
 })
 
-const uploadLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
+const uploadLimiter   = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
+const descargaLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 })
 
-// Límites acordes a la memoria disponible del server (ver fly.toml): el zip
-// se arma entero en memoria y en el pico usa ~3x el tamaño del lote, así que
-// el total no puede acercarse a la RAM del VM (1024mb).
-const MAX_TOTAL_UPLOAD_BYTES = 300 * 1024 * 1024 // 300MB
+// El zip ahora se arma en streaming (ver lib/zip.js) y no acumula el lote
+// entero en memoria, así que este límite ya no es por RAM — es solo para
+// que un solo request no tarde demasiado ni ocupe todo el disco de uploads/.
+const MAX_TOTAL_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024 // 1GB
 
 const upload = multer({
     dest: UPLOAD_DIR + "/",
@@ -61,7 +62,10 @@ router.post("/", auth, uploadLimiter, upload.array("files"), async (req, res) =>
             return res.status(400).send("upload demasiado grande")
         }
 
-        const id = crypto.randomBytes(3).toString("hex")
+        // 16 bytes (128 bits) — a diferencia del id corto de antes, este debe
+        // ser público (es el link que recibe el cliente), así que la entropía
+        // tiene que alcanzar para que forzarlo por fuerza bruta sea inviable.
+        const id = crypto.randomBytes(16).toString("hex")
 
         // Parsear data.txt
         let metadata = {}
@@ -93,21 +97,27 @@ router.post("/", auth, uploadLimiter, upload.array("files"), async (req, res) =>
             else              scanLog("vinculado a orden:", linkedOrder.public_code)
         }
 
-        // Construir ZIP
-        const zipFiles = []
+        // Construir ZIP — se arma en streaming, leyendo cada archivo del
+        // disco a medida que se sube (ver lib/zip.js), sin acumular el lote
+        // entero en memoria.
+        const filesToZip = []
         for (const file of req.files) {
             const ext = file.originalname.split(".").pop().toLowerCase()
             if (!allowedExtensions.includes(ext)) {
                 throw new Error("archivo no permitido: " + file.originalname)
             }
             if (file.originalname.toLowerCase() === "data.txt") continue
-            zipFiles.push({ name: file.originalname, data: fs.readFileSync(file.path) })
+            filesToZip.push({ path: file.path, name: file.originalname })
         }
 
-        const zipBuffer = buildZipBuffer(zipFiles)
         scanLog("subiendo zip a R2")
-        const link = await uploadToR2({ bucket: BUCKETS.scans, key: `${id}.zip`, body: zipBuffer, contentType: "application/zip" })
+        const archive = streamZip(filesToZip)
+        await uploadToR2({ bucket: BUCKETS.scans, key: `${id}.zip`, body: archive, contentType: "application/zip" })
         scanLog("zip subido")
+
+        // Link corto con nuestro dominio en vez de la URL larga de R2 — /d/:id
+        // hace de redirect (ver más abajo).
+        const link = `${process.env.APP_URL}/d/${id}`
 
         // Guardar link en orden y avanzar el estado: el revelado digital ya
         // está entregado, queda pendiente solo el retiro físico del negativo.
@@ -154,8 +164,11 @@ router.post("/", auth, uploadLimiter, upload.array("files"), async (req, res) =>
     }
 })
 
-/* DESCARGA DIRECTA (protegido — evita fuerza bruta sobre el id de 3 bytes) */
-router.get("/d/:id", auth, (req, res) => {
+/* DESCARGA DIRECTA (pública — es el link que recibe el cliente por email).
+   Segura por la entropía del id (16 bytes, ver arriba), no por auth; el
+   rate limit es una capa extra, no la defensa principal. */
+router.get("/d/:id", descargaLimiter, (req, res) => {
+    if (!/^[0-9a-f]{32}$/.test(req.params.id)) return res.status(404).send("no encontrado")
     res.redirect(`${process.env.R2_PUBLIC_URL}/${req.params.id}.zip`)
 })
 
