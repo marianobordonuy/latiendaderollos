@@ -55,8 +55,16 @@ router.post("/", (req, res) => {
 })
 
 /* GET ALL ORDERS */
+/* GET ALL ORDERS — ?tipo= filtra en el server en vez de traer toda la
+   colección y filtrar en el navegador (impresion/taller/taller_espera/
+   servicio filtran por el campo tipo; "rollo" son las órdenes de rollo,
+   que no tienen tipo). Sin el parámetro, se comporta como antes: todo. */
 router.get("/", (req, res) => {
-    res.json(loadOrders())
+    const orders = loadOrders()
+    const { tipo } = req.query
+    if (!tipo) return res.json(orders)
+    const filtered = tipo === "rollo" ? orders.filter(o => !o.tipo) : orders.filter(o => o.tipo === tipo)
+    res.json(filtered)
 })
 
 /* ACTUALIZACIÓN EN LOTE (debe ir antes de /:code/status para no colisionar con esa ruta) */

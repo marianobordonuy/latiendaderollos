@@ -1,15 +1,16 @@
 import { Router } from "express"
 import multer from "multer"
 import rateLimit from "express-rate-limit"
-import { MercadoPagoConfig, Preference, Payment } from "mercadopago"
+import { MercadoPagoConfig, Preference } from "mercadopago"
 import fs from "fs"
 import { loadOrders, saveOrders, loadPrecios, precioUnitario } from "../lib/storage.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { sendImpresionConfirmada, sendImpresionLista } from "../lib/email.js"
 import { auth } from "../lib/auth.js"
 import { sanitizeFilename } from "../lib/zip.js"
-import { verifyMpSignature, applyPaymentResult } from "../lib/mp.js"
+import { createWebhookHandler, createVerificarPagoHandler } from "../lib/mp.js"
 import { notificarAdmin } from "../lib/sms.js"
+import { renderConfirmacionPage } from "../lib/confirmacionPage.js"
 
 function avisoAdminImpresion(order) {
     return notificarAdmin(`Nuevo pedido de impresión pagado: ${order.client.nombre} — $${order.total} UYU (${order.id})`)
@@ -137,34 +138,16 @@ router.delete("/:id", auth, (req, res) => {
 /* VERIFICAR PAGO CON MP (protegido) — re-consulta el pago directo en MP por
    external_reference. Sirve para pedidos que quedaron UNPAID porque el
    webhook nunca llegó o falló la verificación de firma. */
-router.post("/:id/verificar-pago", auth, async (req, res) => {
-    const orders = loadOrders()
-    const order  = orders.find(o => o.id === req.params.id && o.tipo === "impresion")
-    if (!order) return res.status(404).json({ error: "Pedido no encontrado" })
-
-    try {
-        const payment  = new Payment(mp)
-        const result   = await payment.search({ options: { external_reference: order.id } })
-        const results  = result.results || []
-        // Puede haber más de un intento de pago (uno rechazado y otro aprobado);
-        // priorizamos el aprobado en vez de tomar el primero de la lista.
-        const pagoData = results.find(p => p.status === "approved") || results[0]
-        if (!pagoData) return res.status(404).json({ error: "MP no tiene ningún pago registrado para este pedido" })
-
-        const applied = await applyPaymentResult(orders, order, pagoData, {
-            estadoAprobado: "RECIBIDO",
-            onAprobado:     sendImpresionConfirmada,
-            onAdmin:        avisoAdminImpresion,
-            logPrefix:      "Verificación MP"
-        })
-        if (!applied) return res.status(409).json({ error: "El monto del pago en MP no coincide con el total del pedido" })
-
-        res.json(order)
-    } catch (err) {
-        console.error("Error verificando pago en MP:", err.message)
-        res.status(500).json({ error: "Error al consultar MP" })
-    }
-})
+router.post("/:id/verificar-pago", auth, createVerificarPagoHandler(mp, {
+    tipo:           "impresion",
+    estadoAprobado: "RECIBIDO",
+    onAprobado:     sendImpresionConfirmada,
+    onAdmin:        avisoAdminImpresion,
+    logPrefix:      "Verificación MP",
+    notFoundMsg:    "Pedido no encontrado",
+    noPaymentMsg:   "MP no tiene ningún pago registrado para este pedido",
+    mismatchMsg:    "El monto del pago en MP no coincide con el total del pedido"
+}))
 
 /* CREAR PEDIDO */
 router.post("/pedido", pedidoLimiter, subirFotos, async (req, res) => {
@@ -265,73 +248,26 @@ router.post("/pedido", pedidoLimiter, subirFotos, async (req, res) => {
 })
 
 /* WEBHOOK MP */
-router.post("/webhook", async (req, res) => {
-    try {
-        if (!verifyMpSignature(req)) {
-            console.error("Webhook MP: firma inválida o ausente")
-            return res.sendStatus(401)
-        }
-        res.sendStatus(200)
-
-        const { type, data } = req.body
-        if (type !== "payment") return
-
-        const payment  = new Payment(mp)
-        const pagoData = await payment.get({ id: data.id })
-
-        const orders = loadOrders()
-        const order  = orders.find(o => o.id === pagoData.external_reference && o.tipo === "impresion")
-        if (!order) return
-
-        await applyPaymentResult(orders, order, pagoData, {
-            estadoAprobado: "RECIBIDO",
-            onAprobado:     sendImpresionConfirmada,
-            onAdmin:        avisoAdminImpresion,
-            logPrefix:      "Webhook MP"
-        })
-
-    } catch (err) {
-        console.error("Webhook error:", err.message)
-    }
-})
+router.post("/webhook", createWebhookHandler(mp, {
+    tipo:           "impresion",
+    estadoAprobado: "RECIBIDO",
+    onAprobado:     sendImpresionConfirmada,
+    onAdmin:        avisoAdminImpresion,
+    logPrefix:      "Webhook MP"
+}))
 
 /* CONFIRMACIÓN */
 router.get("/confirmacion", (req, res) => {
     const { status, pedido } = req.query
-    const msgs = {
-        success: { titulo: "¡Pago confirmado!", texto: "Recibimos tu pedido. Te avisamos cuando tus copias estén listas.", color: "#2a8a3e" },
-        pending: { titulo: "Pago pendiente",    texto: "Tu pago está siendo procesado. Te confirmamos por email.", color: "#c07a00" },
-        failure: { titulo: "Pago rechazado",    texto: "Hubo un problema con el pago. Podés intentarlo de nuevo.", color: "#c0392b" }
-    }
-    const m = msgs[status] || msgs.failure
-    res.send(`<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${m.titulo} — La Tienda de Rollos</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:system-ui,sans-serif; background:#fff; color:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
-.box { max-width:480px; width:90%; text-align:center; padding:60px 0; }
-.icon { font-size:48px; margin-bottom:24px; }
-.titulo { font-size:28px; font-weight:700; margin-bottom:16px; }
-.texto { font-size:15px; line-height:1.7; opacity:.6; margin-bottom:40px; }
-.pedido { font-size:12px; letter-spacing:3px; opacity:.35; margin-bottom:40px; }
-.btn { display:inline-block; border:1px solid #111; padding:14px 28px; text-decoration:none; color:#111; font-size:11px; letter-spacing:3px; text-transform:uppercase; transition:.2s; }
-.btn:hover { background:#111; color:#fff; }
-</style>
-</head>
-<body>
-<div class="box">
-    <div class="icon">${status === "success" ? "✓" : status === "pending" ? "◔" : "×"}</div>
-    <div class="titulo" style="color:${m.color}">${m.titulo}</div>
-    <div class="texto">${m.texto}</div>
-    ${pedido ? `<div class="pedido">Pedido ${pedido}</div>` : ""}
-    <a href="/imprimir.html" class="btn">Volver</a>
-</div>
-</body>
-</html>`)
+    res.send(renderConfirmacionPage({
+        status, pedido,
+        mensajes: {
+            success: { titulo: "¡Pago confirmado!", texto: "Recibimos tu pedido. Te avisamos cuando tus copias estén listas.", color: "#2a8a3e" },
+            pending: { titulo: "Pago pendiente",    texto: "Tu pago está siendo procesado. Te confirmamos por email.", color: "#c07a00" },
+            failure: { titulo: "Pago rechazado",    texto: "Hubo un problema con el pago. Podés intentarlo de nuevo.", color: "#c0392b" }
+        },
+        volverA: "/imprimir.html"
+    }))
 })
 
 export default router

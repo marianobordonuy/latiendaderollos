@@ -809,9 +809,9 @@ async function createOrder() {
 }
 
 async function loadOrders() {
-    const res  = await fetch("/api/orders");
+    const res  = await fetch("/api/orders?tipo=rollo");
     const data = await res.json();
-    const active = data.filter(o => !o.tipo && o.status !== "DELIVERED").reverse();
+    const active = data.filter(o => o.status !== "DELIVERED").reverse();
     const container = document.getElementById("orders");
 
     actualizarContadorSeleccion();
@@ -943,9 +943,9 @@ document.getElementById("scan-order-code").addEventListener("blur", async () => 
     const code = document.getElementById("scan-order-code").value.trim();
     if (!code) return;
     try {
-        const res   = await fetch("/api/orders");
+        const res   = await fetch("/api/orders?tipo=rollo");
         const all   = await res.json();
-        const orden = all.find(o => !o.tipo && (o.public_code === code || o.twin_check === code));
+        const orden = all.find(o => o.public_code === code || o.twin_check === code);
         if (orden?.client?.email) {
             const emailField = document.getElementById("scan-email");
             // Si el admin ya escribió otro email a mano, no lo pisamos.
@@ -1047,9 +1047,9 @@ function stopScanPolling() {
 const impStatuses = ["PENDIENTE_PAGO", "RECIBIDO", "EN_PROCESO", "LISTO", "ENTREGADO"]
 
 async function loadImpresiones() {
-    const res    = await fetch("/api/orders")
+    const res    = await fetch("/api/orders?tipo=impresion")
     const all    = await res.json()
-    const pedidos = all.filter(o => o.tipo === "impresion").reverse()
+    const pedidos = all.reverse()
     const container = document.getElementById("impresiones")
 
     if (pedidos.length === 0) {
@@ -1258,9 +1258,9 @@ async function loadTalleresPanel() {
 }
 
 async function loadTallerInscripciones() {
-    const res = await fetch("/api/orders")
+    const res = await fetch("/api/orders?tipo=taller")
     const all = await res.json()
-    const inscripciones = all.filter(o => o.tipo === "taller").reverse()
+    const inscripciones = all.reverse()
     const container = document.getElementById("talleres-inscripciones")
 
     if (inscripciones.length === 0) {
@@ -1325,9 +1325,9 @@ async function verificarPagoTaller(id) {
 }
 
 async function loadTallerEspera() {
-    const res = await fetch("/api/orders")
+    const res = await fetch("/api/orders?tipo=taller_espera")
     const all = await res.json()
-    const espera = all.filter(o => o.tipo === "taller_espera").reverse()
+    const espera = all.reverse()
     const container = document.getElementById("talleres-espera")
 
     if (espera.length === 0) {
@@ -1547,9 +1547,9 @@ async function crearLinkServicio() {
 }
 
 async function loadServicios() {
-    const res = await fetch("/api/orders")
+    const res = await fetch("/api/orders?tipo=servicio")
     const all = await res.json()
-    const servicios = all.filter(o => o.tipo === "servicio").reverse()
+    const servicios = all.reverse()
     const container = document.getElementById("servicios-list")
 
     if (servicios.length === 0) {
