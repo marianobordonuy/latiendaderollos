@@ -5,6 +5,11 @@ import { loadOrders, saveOrders, loadTalleres, saveTalleres } from "../lib/stora
 import { auth } from "../lib/auth.js"
 import { verifyMpSignature, applyPaymentResult } from "../lib/mp.js"
 import { sendTallerConfirmado } from "../lib/email.js"
+import { notificarAdmin } from "../lib/sms.js"
+
+function avisoAdminTaller(order) {
+    return notificarAdmin(`Nueva inscripción pagada: ${order.client.nombre} — ${order.taller_snapshot?.nombre || order.taller_id} ($${order.total} UYU)`)
+}
 
 const router = Router()
 
@@ -220,6 +225,7 @@ router.post("/webhook", async (req, res) => {
         await applyPaymentResult(orders, order, pagoData, {
             estadoAprobado: "CONFIRMADO",
             onAprobado:     sendTallerConfirmado,
+            onAdmin:        avisoAdminTaller,
             logPrefix:      "Webhook MP (talleres)"
         })
 
@@ -285,6 +291,7 @@ router.post("/:id/verificar-pago", auth, async (req, res) => {
         const applied = await applyPaymentResult(orders, order, pagoData, {
             estadoAprobado: "CONFIRMADO",
             onAprobado:     sendTallerConfirmado,
+            onAdmin:        avisoAdminTaller,
             logPrefix:      "Verificación MP (talleres)"
         })
         if (!applied) return res.status(409).json({ error: "El monto del pago en MP no coincide con el total de la inscripción" })

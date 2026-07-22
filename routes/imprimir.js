@@ -9,6 +9,11 @@ import { sendImpresionConfirmada, sendImpresionLista } from "../lib/email.js"
 import { auth } from "../lib/auth.js"
 import { sanitizeFilename } from "../lib/zip.js"
 import { verifyMpSignature, applyPaymentResult } from "../lib/mp.js"
+import { notificarAdmin } from "../lib/sms.js"
+
+function avisoAdminImpresion(order) {
+    return notificarAdmin(`Nuevo pedido de impresión pagado: ${order.client.nombre} — $${order.total} UYU (${order.id})`)
+}
 
 const router = Router()
 
@@ -149,6 +154,7 @@ router.post("/:id/verificar-pago", auth, async (req, res) => {
         const applied = await applyPaymentResult(orders, order, pagoData, {
             estadoAprobado: "RECIBIDO",
             onAprobado:     sendImpresionConfirmada,
+            onAdmin:        avisoAdminImpresion,
             logPrefix:      "Verificación MP"
         })
         if (!applied) return res.status(409).json({ error: "El monto del pago en MP no coincide con el total del pedido" })
@@ -280,6 +286,7 @@ router.post("/webhook", async (req, res) => {
         await applyPaymentResult(orders, order, pagoData, {
             estadoAprobado: "RECIBIDO",
             onAprobado:     sendImpresionConfirmada,
+            onAdmin:        avisoAdminImpresion,
             logPrefix:      "Webhook MP"
         })
 

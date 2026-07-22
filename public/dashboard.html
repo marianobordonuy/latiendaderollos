@@ -936,6 +936,34 @@ function scanLog(msg) {
     box.scrollTop = box.scrollHeight;
 }
 
+// Al completar el código de orden, busca el email del cliente automáticamente
+// (rollo activo por public_code o twin_check) — antes había que tipearlo a mano.
+let ultimoEmailAutocompletado = null;
+document.getElementById("scan-order-code").addEventListener("blur", async () => {
+    const code = document.getElementById("scan-order-code").value.trim();
+    if (!code) return;
+    try {
+        const res   = await fetch("/api/orders");
+        const all   = await res.json();
+        const orden = all.find(o => !o.tipo && (o.public_code === code || o.twin_check === code));
+        if (orden?.client?.email) {
+            const emailField = document.getElementById("scan-email");
+            // Si el admin ya escribió otro email a mano, no lo pisamos.
+            if (!emailField.value || emailField.value === ultimoEmailAutocompletado) {
+                emailField.value = orden.client.email;
+                ultimoEmailAutocompletado = orden.client.email;
+                scanLog("email autocompletado desde la orden " + code);
+            } else {
+                scanLog("orden encontrada, se mantiene el email cargado a mano");
+            }
+        } else {
+            scanLog("no se encontró un rollo activo con ese código");
+        }
+    } catch (err) {
+        scanLog("error buscando la orden: " + err.message);
+    }
+});
+
 async function uploadScans() {
     const files = scanInput.files;
     if (!files.length) { alert("Seleccioná una carpeta primero"); return; }

@@ -8,6 +8,7 @@ import { buildZipBuffer } from "../lib/zip.js"
 import { uploadToR2, BUCKETS } from "../lib/s3.js"
 import { loadOrders, saveOrders } from "../lib/storage.js"
 import { sendScansReady } from "../lib/email.js"
+import { sendSms, formatearTelefonoUY } from "../lib/sms.js"
 import { auth } from "../lib/auth.js"
 
 const router = Router()
@@ -131,6 +132,16 @@ router.post("/", auth, uploadLimiter, upload.array("files"), async (req, res) =>
             scanLog("enviando email a", email)
             await sendScansReady(email, link, order)
             scanLog("email enviado")
+        }
+
+        // SMS (opcional — solo si la orden vinculada tiene teléfono cargado).
+        // Sin await a propósito: no tiene que retrasar la respuesta del
+        // upload, que ya terminó con éxito llegado a este punto.
+        const telefono = order?.client?.phone ? formatearTelefonoUY(order.client.phone) : null
+        if (telefono) {
+            sendSms(telefono, "La Tienda de Rollos: Tus rollito ya está listo. Revisá tu correo para ver el link de descarga.")
+                .then(() => scanLog("SMS enviado a", telefono))
+                .catch(e => scanLog("error enviando SMS:", e.message))
         }
 
         res.json({ link, linkedOrder: linkedOrder ? linkedOrder.public_code : null })
