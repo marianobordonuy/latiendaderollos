@@ -19,6 +19,10 @@ const mp = new MercadoPagoConfig({
 })
 
 const TALLER_STATUSES = ["PENDIENTE_PAGO", "CONFIRMADO", "COMPLETADO", "CANCELADO"]
+// PAID solo lo puede poner MP (webhook o "verificar pago"). Este es el único
+// estado que un admin puede setear a mano, para cuando el cliente abona en
+// efectivo o por transferencia fuera de MercadoPago.
+const TALLER_PAYMENT_STATUSES = ["UNPAID", "PAID_CASH"]
 const inscripcionLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
 
 /* LISTAR TALLERES (público) — incluye cupos_disponibles calculado */
@@ -240,6 +244,108 @@ router.post("/:id/verificar-pago", auth, createVerificarPagoHandler(mp, {
     noPaymentMsg:   "MP no tiene ningún pago registrado para esta inscripción",
     mismatchMsg:    "El monto del pago en MP no coincide con el total de la inscripción"
 }))
+
+/* ADMIN: MARCAR PAGO EN EFECTIVO/TRANSFERENCIA (protegido) — el estado PAID
+   verificado por MercadoPago lo pone únicamente el webhook o "verificar pago
+   con MP"; esto es para reflejar a mano un pago que llegó por fuera de MP. */
+router.put("/:id/payment", auth, async (req, res) => {
+    const nuevoEstado = req.body.payment_status
+    if (!TALLER_PAYMENT_STATUSES.includes(nuevoEstado)) {
+        return res.status(400).json({ error: "payment_status inválido" })
+    }
+    const orders = loadOrders()
+    const order  = orders.find(o => o.id === req.params.id && o.tipo === "taller")
+    if (!order) return res.status(404).json({ error: "Inscripción no encontrada" })
+
+    // Un pago ya verificado por MP nunca se pisa a mano — si hace falta
+    // corregirlo, que sea desde MP, no desde este endpoint.
+    if (order.payment_status === "PAID") {
+        return res.status(409).json({ error: "Este pago ya está verificado por MercadoPago, no se puede sobrescribir a mano" })
+    }
+    if (nuevoEstado === "PAID_CASH" && order.status === "CANCELADO") {
+        return res.status(400).json({ error: "No se puede marcar como pagada una inscripción cancelada" })
+    }
+
+    // Idempotencia: no reenviar el email si ya estaba marcada como pagada
+    // en efectivo (ej. doble click, o reenvío del mismo valor).
+    const yaEstabaPagadoCash = order.payment_status === "PAID_CASH"
+
+    order.payment_status = nuevoEstado
+    order.updated_at     = new Date()
+
+    if (nuevoEstado === "PAID_CASH" && order.status === "PENDIENTE_PAGO") {
+        order.status = "CONFIRMADO"
+    }
+    // Si se corrige un pago en efectivo marcado por error, se libera el
+    // cupo de vuelta — de lo contrario la inscripción queda CONFIRMADO sin
+    // haber pagado, ocupando un lugar para siempre.
+    if (nuevoEstado === "UNPAID" && order.status === "CONFIRMADO") {
+        order.status = "PENDIENTE_PAGO"
+    }
+
+    saveOrders(orders)
+
+    if (nuevoEstado === "PAID_CASH" && !yaEstabaPagadoCash && order.client.email) {
+        try { await sendTallerConfirmado(order) } catch (e) { console.error("Error enviando email:", e.message) }
+    }
+
+    res.json(order)
+})
+
+/* ADMIN: MOVER INSCRIPCIÓN A OTRO TALLER (protegido) — por si alguien se
+   quiere cambiar de taller después de anotarse. No ajusta el pago: si el
+   precio del taller nuevo es distinto, el total se actualiza pero hay que
+   revisar la diferencia a mano. */
+router.put("/:id/mover", auth, async (req, res) => {
+    const { taller_id } = req.body
+    if (!taller_id) return res.status(400).json({ error: "Falta taller_id" })
+
+    const orders = loadOrders()
+    const order  = orders.find(o => o.id === req.params.id && o.tipo === "taller")
+    if (!order) return res.status(404).json({ error: "Inscripción no encontrada" })
+
+    // No-op: si es el mismo taller que ya tenía, no hace falta reescribir
+    // nada (evita pisar total/snapshot por accidente si el admin aprieta
+    // "Mover" sin cambiar la selección).
+    if (taller_id === order.taller_id) return res.json(order)
+
+    const taller = loadTalleres().find(t => t.id === taller_id)
+    if (!taller) return res.status(404).json({ error: "Taller no encontrado" })
+    if (taller.activo === false) return res.status(400).json({ error: "Ese taller no está activo" })
+
+    if (cuposOcupados(orders, taller_id) >= taller.cupo) {
+        return res.status(400).json({ error: "No quedan cupos disponibles en ese taller" })
+    }
+
+    const yaPagado       = order.payment_status === "PAID" || order.payment_status === "PAID_CASH"
+    const precioAnterior = order.total
+
+    order.taller_id        = taller_id
+    order.taller_snapshot  = {
+        nombre:   taller.nombre,
+        fecha:    taller.fecha,
+        horario:  taller.horario,
+        lugar:    taller.lugar,
+        ciudad:   taller.ciudad,
+        precio:   taller.precio,
+        duracion: taller.duracion
+    }
+    order.total      = taller.precio
+    order.updated_at = new Date()
+    saveOrders(orders)
+
+    // Si ya había pagado, avisarle por email del taller/fecha nuevo — si no
+    // pagó todavía, no hace falta (todavía no está "confirmado" nada).
+    if (yaPagado && order.client.email) {
+        try { await sendTallerConfirmado(order) } catch (e) { console.error("Error enviando email:", e.message) }
+    }
+
+    const aviso = (yaPagado && precioAnterior !== taller.precio)
+        ? `El precio del taller nuevo ($${taller.precio}) es distinto al que ya pagó ($${precioAnterior}) — revisá la diferencia con el cliente.`
+        : undefined
+
+    res.json({ ...order, aviso })
+})
 
 /* ADMIN: ACTUALIZAR ESTADO */
 router.put("/:id/status", auth, (req, res) => {

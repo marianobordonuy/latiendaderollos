@@ -309,8 +309,9 @@ body {
 .meta-row { display:flex; justify-content:space-between; font-size:12px; }
 .meta-label { opacity:.4; text-transform:uppercase; letter-spacing:1px; }
 .meta-value { font-weight:500; }
-.payment-PAID   { color:#2a8a3e; }
-.payment-UNPAID { color:#c0392b; }
+.payment-PAID      { color:#2a8a3e; }
+.payment-UNPAID    { color:#c0392b; }
+.payment-PAID_CASH { color:#1d6fa5; }
 
 .scan-link { font-size:11px; color:#1a7abf; text-decoration:none; }
 .scan-link:hover { text-decoration:underline; }
@@ -1274,14 +1275,20 @@ const tallerOrderStatuses = ["PENDIENTE_PAGO", "CONFIRMADO", "COMPLETADO", "CANC
 let tallerConfigCache = []
 
 async function loadTalleresPanel() {
-    await loadTallerInscripciones()
+    // Se pide /api/talleres una sola vez acá y se comparte con las dos
+    // funciones que lo necesitan, en vez de que cada una lo pida por su lado.
+    const talleres = await fetch("/api/talleres").then(r => r.json()).catch(() => [])
+    await loadTallerInscripciones(talleres)
     await loadTallerEspera()
-    await loadTallerConfig()
+    await loadTallerConfig(talleres)
 }
 
-async function loadTallerInscripciones() {
-    const res = await fetch("/api/orders?tipo=taller")
-    const all = await res.json()
+const tallerPaymentStatuses = ["UNPAID", "PAID_CASH"]
+
+async function loadTallerInscripciones(talleresDisponibles) {
+    const ordenesRes = await fetch("/api/orders?tipo=taller")
+    const all = await ordenesRes.json()
+    if (!talleresDisponibles) talleresDisponibles = await fetch("/api/talleres").then(r => r.json()).catch(() => [])
     const inscripciones = all.reverse()
     const container = document.getElementById("talleres-inscripciones")
 
@@ -1298,8 +1305,8 @@ async function loadTallerInscripciones() {
                     ${o.status}
                 </div>
             </div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:10px">${o.taller_snapshot?.nombre || o.taller_id}</div>
             <div class="order-meta">
-                <div class="meta-row"><span class="meta-label">Taller</span><span class="meta-value">${o.taller_snapshot?.nombre || o.taller_id}</span></div>
                 <div class="meta-row"><span class="meta-label">Cliente</span><span class="meta-value">${o.client.nombre}</span></div>
                 <div class="meta-row"><span class="meta-label">Email</span><span class="meta-value" style="font-size:11px">${o.client.email}</span></div>
                 <div class="meta-row"><span class="meta-label">Teléfono</span><span class="meta-value">${o.client.telefono || "—"}</span></div>
@@ -1315,7 +1322,20 @@ async function loadTallerInscripciones() {
                     </select>
                     <button class="btn-update" onclick="updateTallerOrderStatus('${o.id}')">Estado</button>
                 </div>
-                ${o.payment_status !== "PAID" ? `<button class="btn-update" onclick="verificarPagoTaller('${o.id}')">Verificar pago con MP</button>` : ""}
+                ${o.payment_status !== "PAID" ? `
+                <div class="control-row">
+                    <select id="taller-payment-${o.id}">
+                        ${tallerPaymentStatuses.map(s => `<option value="${s}" ${o.payment_status===s?"selected":""}>${s === "PAID_CASH" ? "PAID (CASH)" : s}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="updateTallerPayment('${o.id}')">Pago manual</button>
+                </div>
+                <button class="btn-update" onclick="verificarPagoTaller('${o.id}')">Verificar pago con MP</button>` : ""}
+                <div class="control-row">
+                    <select id="taller-mover-${o.id}">
+                        ${talleresDisponibles.filter(t => t.activo !== false || t.id === o.taller_id).map(t => `<option value="${t.id}" ${t.id===o.taller_id?"selected":""}>${t.nombre}${t.activo===false?" (inactivo)":""}</option>`).join("")}
+                    </select>
+                    <button class="btn-update" onclick="moverTaller('${o.id}')">Mover</button>
+                </div>
                 <button class="btn-delete" onclick="deleteTallerOrder('${o.id}')">Eliminar inscripción</button>
             </div>
         </div>
@@ -1343,6 +1363,31 @@ async function verificarPagoTaller(id) {
     const data = await res.json()
     if (!res.ok) { alert(data.error || "Error al verificar el pago"); return }
     alert(`Pago ${data.payment_status === "PAID" ? "confirmado" : "consultado"}: ${data.payment_status}`)
+    loadTallerInscripciones()
+}
+
+async function updateTallerPayment(id) {
+    const payment_status = document.getElementById(`taller-payment-${id}`).value
+    const res  = await fetch(`/api/talleres/${id}/payment`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ payment_status })
+    })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || "Error al actualizar el pago"); return }
+    loadTallerInscripciones()
+}
+
+async function moverTaller(id) {
+    const taller_id = document.getElementById(`taller-mover-${id}`).value
+    const res  = await fetch(`/api/talleres/${id}/mover`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ taller_id })
+    })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || "Error al mover la inscripción"); return }
+    if (data.aviso) alert(data.aviso)
     loadTallerInscripciones()
 }
 
@@ -1386,10 +1431,9 @@ async function deleteTallerEspera(id) {
     loadTallerEspera()
 }
 
-async function loadTallerConfig() {
+async function loadTallerConfig(talleres) {
     try {
-        const res = await fetch("/api/talleres")
-        tallerConfigCache = await res.json()
+        tallerConfigCache = talleres || await fetch("/api/talleres").then(r => r.json())
     } catch {
         tallerConfigCache = []
     }
